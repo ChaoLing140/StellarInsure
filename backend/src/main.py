@@ -26,15 +26,3 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
-
-@app.get("/api/policies")
-async def get_policies():
-    return {"policies": []}
-
-@app.get("/api/policies/{policy_id}")
-async def get_policy(policy_id: int):
-    return {"policy_id": policy_id}
-
-@app.post("/api/claims")
-async def submit_claim():
-    return {"message": "Claim submitted"}

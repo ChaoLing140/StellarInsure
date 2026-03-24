@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from ..database import get_db
-from ..models import User, Policy, Claim, PolicyStatus
+from ..models import User, Policy, Claim, PolicyStatus, PolicyType
 from ..schemas import (
     PolicyCreateRequest,
     PolicyResponse,
+    PolicyFilterRequest,
+    PolicyListResponse,
     ClaimCreateRequest,
     ClaimResponse,
     MessageResponse
@@ -21,7 +23,11 @@ async def create_policy(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    from ..models import Policy, PolicyType, PolicyStatus
+    if policy_data.end_time <= policy_data.start_time:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="End time must be greater than start time"
+        )
     
     policy = Policy(
         policyholder_id=current_user.id,
@@ -54,16 +60,29 @@ async def create_policy(
     )
 
 
-@router.get("/", response_model=List[PolicyResponse])
+@router.get("/", response_model=PolicyListResponse)
 async def get_user_policies(
+    page: int = Query(1, ge=1, description="Page number"),
+    per_page: int = Query(10, ge=1, le=100, description="Items per page"),
+    status: Optional[PolicyStatus] = Query(None, description="Filter by status"),
+    policy_type: Optional[PolicyType] = Query(None, description="Filter by type"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    policies = db.query(Policy).filter(
-        Policy.policyholder_id == current_user.id
-    ).all()
+    query = db.query(Policy).filter(Policy.policyholder_id == current_user.id)
     
-    return [
+    if status:
+        query = query.filter(Policy.status == status)
+    
+    if policy_type:
+        query = query.filter(Policy.policy_type == policy_type)
+    
+    total = query.count()
+    
+    offset = (page - 1) * per_page
+    policies = query.order_by(Policy.created_at.desc()).offset(offset).limit(per_page).all()
+    
+    policy_responses = [
         PolicyResponse(
             id=policy.id,
             policyholder_id=policy.policyholder_id,
@@ -80,6 +99,14 @@ async def get_user_policies(
         )
         for policy in policies
     ]
+    
+    return PolicyListResponse(
+        policies=policy_responses,
+        total=total,
+        page=page,
+        per_page=per_page,
+        has_next=(offset + per_page) < total
+    )
 
 
 @router.get("/{policy_id}", response_model=PolicyResponse)

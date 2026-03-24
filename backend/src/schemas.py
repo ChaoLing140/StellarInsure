@@ -45,6 +45,19 @@ class PolicyCreateRequest(BaseModel):
     trigger_condition: str = Field(..., min_length=1, max_length=500)
 
 
+class PolicyFilterRequest(BaseModel):
+    status: Optional[PolicyStatus] = None
+    policy_type: Optional[PolicyType] = None
+
+
+class PolicyListResponse(BaseModel):
+    policies: list
+    total: int
+    page: int
+    per_page: int
+    has_next: bool
+
+
 class PolicyResponse(BaseModel):
     id: int
     policyholder_id: int
