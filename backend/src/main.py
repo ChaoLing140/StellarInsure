@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
+from .routes import auth_router, policies_router
 
 settings = get_settings()
 
@@ -14,6 +15,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(auth_router)
+app.include_router(policies_router)
+
+
 @app.get("/")
 async def root():
     return {"message": "StellarInsure API"}
@@ -24,15 +29,12 @@ async def health():
 
 @app.get("/api/policies")
 async def get_policies():
-    # TODO: Implement policy fetching
     return {"policies": []}
 
 @app.get("/api/policies/{policy_id}")
 async def get_policy(policy_id: int):
-    # TODO: Implement policy details
     return {"policy_id": policy_id}
 
 @app.post("/api/claims")
 async def submit_claim():
-    # TODO: Implement claim submission
     return {"message": "Claim submitted"}
