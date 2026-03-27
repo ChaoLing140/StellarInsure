@@ -13,3 +13,4 @@ python-multipart
 stellar-sdk>=9.0.0
 pytest
 pytest-cov
+factory-boy
