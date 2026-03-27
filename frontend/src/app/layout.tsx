@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LanguageProvider } from "@/i18n/provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { OnboardingFlow } from "@/components/onboarding";
+import { PageTransition } from "@/components/page-transition";
 
 import "./globals.css";
 
@@ -39,6 +40,7 @@ export default function RootLayout({
 
               <nav className="nav-links" aria-label="Section navigation">
                 <Link href="/">Overview</Link>
+                <Link href="/policies/weather-alpha">Policy Detail</Link>
                 <Link href="/history">History</Link>
                 <a href="#coverage">Coverage</a>
                 <a href="#workflow">Workflow</a>
@@ -47,7 +49,7 @@ export default function RootLayout({
               <LanguageSwitcher />
             </header>
 
-            {children}
+            <PageTransition>{children}</PageTransition>
 
             <footer className="footer">
               Built for transparent policy creation, automated claims, and multilingual access.

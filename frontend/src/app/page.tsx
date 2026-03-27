@@ -2,6 +2,7 @@
 
 import React from "react";
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 
 import { FeatureCard } from "@/components/feature-card";
 import { useAppTranslation } from "@/i18n/provider";
@@ -32,6 +33,9 @@ export default function HomePage() {
               <a className="cta-secondary" href="#workflow">
                 {t("hero.secondaryCta")}
               </a>
+              <Link className="cta-secondary" href="/policies/weather-alpha">
+                View sample policy
+              </Link>
             </div>
           </article>
 

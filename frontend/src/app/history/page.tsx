@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { startTransition, useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
 
 type TxType = "premium" | "payout" | "refund" | "all";
@@ -92,27 +92,52 @@ export default function TransactionHistoryPage() {
   const [statusFilter, setStatusFilter] = useState<TxStatus>("all");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const deferredTypeFilter = useDeferredValue(typeFilter);
+  const deferredStatusFilter = useDeferredValue(statusFilter);
+  const isFiltering =
+    deferredTypeFilter !== typeFilter || deferredStatusFilter !== statusFilter;
 
   const filtered = useMemo(() => {
     return MOCK_TRANSACTIONS.filter((tx) => {
-      const matchType = typeFilter === "all" || tx.transaction_type === typeFilter;
-      const matchStatus = statusFilter === "all" || tx.status === statusFilter;
+      const matchType =
+        deferredTypeFilter === "all" || tx.transaction_type === deferredTypeFilter;
+      const matchStatus =
+        deferredStatusFilter === "all" || tx.status === deferredStatusFilter;
       return matchType && matchStatus;
     });
-  }, [typeFilter, statusFilter]);
+  }, [deferredStatusFilter, deferredTypeFilter]);
 
   const total = filtered.length;
   const totalPages = Math.ceil(total / PER_PAGE);
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
-  const handleFilterChange = useCallback(
-    (setter: React.Dispatch<React.SetStateAction<any>>) =>
-      (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setter(e.target.value as any);
-        setPage(1);
-      },
-    []
-  );
+  function getPolicyHref(policyId: number | null) {
+    if (policyId === 1) {
+      return "/policies/weather-alpha";
+    }
+    if (policyId === 2) {
+      return "/policies/flight-orbit";
+    }
+    return "/policies/weather-alpha";
+  }
+
+  function handleTypeChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const value = event.target.value as TxType;
+    startTransition(() => {
+      setTypeFilter(value);
+      setPage(1);
+      setExpandedId(null);
+    });
+  }
+
+  function handleStatusChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const value = event.target.value as TxStatus;
+    startTransition(() => {
+      setStatusFilter(value);
+      setPage(1);
+      setExpandedId(null);
+    });
+  }
 
   return (
     <main id="main-content" className="tx-history-page">
@@ -123,7 +148,7 @@ export default function TransactionHistoryPage() {
       </div>
 
       {/* Filters */}
-      <div className="tx-filters" role="search" aria-label="Filter transactions">
+      <div className="tx-filters motion-panel" role="search" aria-label="Filter transactions">
         <div className="tx-filter-group">
           <label htmlFor="type-filter" className="tx-filter-label">
             Type
@@ -132,7 +157,7 @@ export default function TransactionHistoryPage() {
             id="type-filter"
             className="tx-select"
             value={typeFilter}
-            onChange={handleFilterChange(setTypeFilter)}
+            onChange={handleTypeChange}
           >
             <option value="all">All Types</option>
             <option value="premium">Premium</option>
@@ -149,7 +174,7 @@ export default function TransactionHistoryPage() {
             id="status-filter"
             className="tx-select"
             value={statusFilter}
-            onChange={handleFilterChange(setStatusFilter)}
+            onChange={handleStatusChange}
           >
             <option value="all">All Statuses</option>
             <option value="successful">Successful</option>
@@ -161,6 +186,9 @@ export default function TransactionHistoryPage() {
         <p className="tx-result-count" aria-live="polite">
           {total} transaction{total !== 1 ? "s" : ""} found
         </p>
+        <p className="tx-filtering" aria-live="polite" role="status">
+          {isFiltering ? "Updating results..." : "Filters are up to date."}
+        </p>
       </div>
 
       {/* Table */}
@@ -170,7 +198,12 @@ export default function TransactionHistoryPage() {
           <p>No transactions match your filters.</p>
         </div>
       ) : (
-        <div className="tx-table-wrapper" role="region" aria-label="Transaction list">
+        <div
+          className={`tx-table-wrapper motion-panel ${isFiltering ? "tx-table-wrapper--loading" : ""}`}
+          role="region"
+          aria-label="Transaction list"
+          aria-busy={isFiltering}
+        >
           <table className="tx-table" aria-labelledby="tx-history-title">
             <thead>
               <tr>
@@ -246,7 +279,15 @@ export default function TransactionHistoryPage() {
                             {tx.policy_id && (
                               <div>
                                 <span className="tx-detail-label">Policy ID</span>
-                                <span className="tx-detail-value">#{tx.policy_id}</span>
+                                <Link
+                                  className="tx-detail-link"
+                                  href={getPolicyHref(tx.policy_id)}
+                                  onClick={(event: React.MouseEvent<HTMLAnchorElement>) =>
+                                    event.stopPropagation()
+                                  }
+                                >
+                                  #{tx.policy_id} policy snapshot
+                                </Link>
                               </div>
                             )}
                             {tx.claim_id && (
