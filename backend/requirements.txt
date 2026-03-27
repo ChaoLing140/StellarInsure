@@ -11,6 +11,8 @@ python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
 stellar-sdk>=9.0.0
+python-json-logger
+sentry-sdk
 slowapi
 httpx
 pytest

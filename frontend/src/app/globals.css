@@ -317,3 +317,295 @@ select {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+/* Transaction History Styles */
+.tx-history-page {
+  padding: 2rem 0 4rem;
+}
+
+.tx-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--surface);
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+}
+
+.tx-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tx-filter-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.tx-select {
+  padding: 0.6rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--card-border);
+  background: white;
+  min-width: 140px;
+}
+
+.tx-result-count {
+  margin: 0;
+  margin-left: auto;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.tx-table-wrapper {
+  overflow-x: auto;
+  background: var(--surface);
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+}
+
+.tx-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tx-table th {
+  padding: 1rem 1.5rem;
+  border-bottom: 2px solid var(--card-border);
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tx-table td {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--card-border);
+  vertical-align: middle;
+}
+
+.tx-row:hover {
+  background: rgba(16, 37, 66, 0.02);
+}
+
+.tx-row--expanded {
+  background: rgba(31, 122, 140, 0.04);
+}
+
+.tx-badge {
+  display: inline-flex;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.tx-badge--success { background: #e6f4ea; color: #1e8e3e; }
+.tx-badge--pending { background: #fef7e0; color: #f9ab00; }
+.tx-badge--failed { background: #fce8e6; color: #d93025; }
+.tx-badge--premium { background: #e8f0fe; color: #1967d2; }
+.tx-badge--payout { background: #f3e8fd; color: #9334e6; }
+.tx-badge--refund { background: #e2f3f5; color: #007b83; }
+
+.tx-amount {
+  font-family: monospace;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.tx-hash-link {
+  color: var(--focus);
+  text-decoration: none;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.tx-hash-link:hover {
+  text-decoration: underline;
+}
+
+.tx-external-icon {
+  margin-left: 0.25rem;
+  font-size: 0.8rem;
+}
+
+.tx-expand-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.tx-detail-panel {
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.tx-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+}
+
+.tx-detail-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.tx-detail-value {
+  display: block;
+  font-size: 0.95rem;
+  word-break: break-all;
+}
+
+.tx-detail-hash { font-family: monospace; }
+.tx-detail-link { color: var(--focus); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+
+.tx-empty {
+  text-align: center;
+  padding: 4rem;
+  background: var(--surface);
+  border-radius: 1rem;
+  border: 1px solid var(--card-border);
+}
+
+.tx-empty-icon { font-size: 3rem; display: block; margin-bottom: 1rem; }
+
+.tx-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.tx-page-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--card-border);
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tx-page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.tx-page-btn--active { background: var(--surface-strong); color: white; border-color: var(--surface-strong); }
+
+.tx-pagination-info {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* Onboarding Styles */
+.ob-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 37, 66, 0.4);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.ob-modal {
+  background: var(--surface);
+  width: 100%;
+  max-width: 540px;
+  border-radius: 2rem;
+  padding: 3rem 2.5rem 2.5rem;
+  position: relative;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.ob-skip {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.ob-progress {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.ob-dot {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  border: none;
+  background: var(--card-border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ob-dot--active { background: var(--surface-strong); }
+.ob-dot--done { background: var(--focus); }
+
+.ob-content {
+  min-height: 280px;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.ob-content--fade { opacity: 0; transform: translateY(10px); }
+
+.ob-icon { font-size: 4rem; margin-bottom: 1.5rem; }
+.ob-title { font-size: 2rem; margin: 0 0 1rem; line-height: 1.2; }
+.ob-desc { font-size: 1.1rem; color: var(--text-muted); line-height: 1.6; margin: 0; }
+
+.ob-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+.ob-btn {
+  padding: 0.8rem 1.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ob-btn--primary { background: var(--surface-strong); color: white; border: none; }
+.ob-btn--ghost { background: none; border: 1px solid var(--card-border); color: var(--text); }
+.ob-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.ob-step-counter { font-size: 0.9rem; font-weight: 700; color: var(--text-muted); }
+
+@media (max-width: 640px) {
+  .tx-table, .tx-table thead, .tx-table tbody, .tx-table th, .tx-table td, .tx-table tr { 
+    display: block; 
+  }
+  .tx-table thead tr { position: absolute; top: -9999px; left: -9999px; }
+  .tx-table td { position: relative; padding-left: 50%; border: none; border-bottom: 1px solid var(--card-border); }
+  .tx-table td:before { 
+    content: attr(data-label); 
+    position: absolute; left: 1rem; width: 45%; padding-right: 10px; white-space: nowrap; 
+    font-weight: 700; color: var(--text-muted); font-size: 0.8rem;
+  }
+}

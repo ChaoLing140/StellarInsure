@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { LanguageProvider } from "@/i18n/provider";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { OnboardingFlow } from "@/components/onboarding";
 
 import "./globals.css";
 
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <LanguageProvider>
+          <OnboardingFlow />
           <a className="skip-link" href="#main-content">
             Skip to main content
           </a>
@@ -36,7 +38,8 @@ export default function RootLayout({
               </Link>
 
               <nav className="nav-links" aria-label="Section navigation">
-                <a href="#overview">Overview</a>
+                <Link href="/">Overview</Link>
+                <Link href="/history">History</Link>
                 <a href="#coverage">Coverage</a>
                 <a href="#workflow">Workflow</a>
               </nav>

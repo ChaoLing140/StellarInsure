@@ -1,12 +1,23 @@
+import os
+import logging
+import time
+import json
+import uuid
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from pythonjsonlogger import jsonlogger
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
 from .config import get_settings
 from .routes import auth_router, policies_router, claims_router, storage_router, webhooks_router
 from .errors import StellarInsureError
 from .schemas import ErrorResponse
+from .database import engine
 from .rate_limiter import setup_rate_limiting
 
 settings = get_settings()
@@ -34,6 +45,31 @@ tags_metadata = [
     },
 ]
 
+# Initialize Sentry
+if settings.environment == "production" and os.getenv("SENTRY_DSN"):
+    sentry_sdk.init(
+        dsn=os.getenv("SENTRY_DSN"),
+        integrations=[
+            FastApiIntegration(),
+            SqlalchemyIntegration(),
+        ],
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+    )
+
+# Structured Logging Setup
+handler = logging.StreamHandler()
+formatter = jsonlogger.JsonFormatter(
+    fmt='%(asctime)s %(levelname)s %(name)s %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%SZ'
+)
+handler.setFormatter(formatter)
+root_logger = logging.getLogger()
+root_logger.handlers = [handler]
+root_logger.setLevel(logging.INFO if settings.environment == "production" else logging.DEBUG)
+
+logger = logging.getLogger("stellar-insure")
+
 app = FastAPI(
     title="StellarInsure API",
     description="""
@@ -47,16 +83,40 @@ This API provides endpoints for:
     """,
     version="1.0.0",
     openapi_tags=tags_metadata,
-    contact={
-        "name": "StellarInsure Team",
-        "url": "https://stellarinsure.io",
-        "email": "support@stellarinsure.io",
-    },
-    license_info={
-        "name": "MIT",
-        "url": "https://opensource.org/licenses/MIT",
-    },
 )
+
+# Request-Response Middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    request_id = str(uuid.uuid4())
+    start_time = time.time()
+    
+    logger.info("request_started", extra={
+        "request_id": request_id,
+        "method": request.method,
+        "path": request.url.path,
+        "query_params": str(request.query_params)
+    })
+    
+    try:
+        response = await call_next(request)
+        process_time = time.time() - start_time
+        
+        logger.info("request_finished", extra={
+            "request_id": request_id,
+            "status_code": response.status_code,
+            "duration_ms": int(process_time * 1000)
+        })
+        
+        response.headers["X-Request-Id"] = request_id
+        return response
+    except Exception as e:
+        logger.error("request_failed", extra={
+            "request_id": request_id, 
+            "error": str(e),
+            "exception": type(e).__name__
+        })
+        raise
 
 app.add_middleware(
     CORSMiddleware,
@@ -73,6 +133,21 @@ app.include_router(storage_router)
 app.include_router(webhooks_router)
 
 setup_rate_limiting(app)
+
+@app.get("/health", summary="Health check", description="Checks the health status of the API service and its dependencies.")
+async def health():
+    health_status = {"status": "healthy", "dependencies": {}}
+    
+    # Check DB connection
+    try:
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+            health_status["dependencies"]["database"] = "connected"
+    except Exception as e:
+        health_status["status"] = "unhealthy"
+        health_status["dependencies"]["database"] = f"error: {str(e)}"
+        
+    return health_status
 
 @app.exception_handler(StellarInsureError)
 async def stellar_insure_error_handler(request: Request, exc: StellarInsureError):
@@ -107,7 +182,3 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.get("/", summary="Root endpoint", description="Returns a simple welcome message.")
 async def root():
     return {"message": "Welcome to StellarInsure API"}
-
-@app.get("/health", summary="Health check", description="Checks the health status of the API service.")
-async def health():
-    return {"status": "healthy"}

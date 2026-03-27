@@ -4,11 +4,14 @@ Handles contract invocation, transaction building, submission, and event monitor
 """
 import json
 import base64
+import logging
 from typing import Optional, Dict, Any, List, Callable
 from datetime import datetime
 from stellar_sdk import SorobanServer
 from stellar_sdk import Keypair, Server, TransactionBuilder, Network, Asset, Operation, SorobanDataBuilder, Address, InvokeHostFunction, StrKey, MuxedAccount, xdr as stellar_xdr
 from stellar_sdk.soroban_types import Ed25519PublicKey
+
+logger = logging.getLogger("stellar-insure.stellar")
 from stellar_sdk.exceptions import (
     BadRequestError,
     BadSignatureError,
@@ -138,7 +141,9 @@ class StellarService:
             StellarContractError: If transaction submission fails
         """
         try:
+            logger.info("submitting_stellar_transaction", extra={"source": transaction.source})
             response = await self.server.submit_transaction(transaction)
+            logger.info("stellar_transaction_submitted", extra={"hash": response["hash"]})
 
             return {
                 "hash": response["hash"],
@@ -148,8 +153,10 @@ class StellarService:
             }
 
         except BadRequestError as e:
+            logger.warning("stellar_transaction_rejected", extra={"error": str(e)})
             raise StellarContractError(f"Transaction rejected: {str(e)}")
         except ConnectionError as e:
+            logger.error("stellar_connection_failed", extra={"error": str(e)})
             raise StellarContractError(f"Connection error: {str(e)}")
 
     async def simulate_transaction(self, transaction) -> Dict[str, Any]:
@@ -193,6 +200,10 @@ class StellarService:
         Returns:
             Transaction response with hash and status
         """
+        logger.info("invoking_contract_function", extra={
+            "function": function_name,
+            "contract_id": self.contract_id
+        })
         keypair = source_keypair or self.admin_keypair
         if not keypair:
             raise StellarContractError("No keypair available for signing")
