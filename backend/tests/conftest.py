@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 os.environ["ENVIRONMENT"] = "test"
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key"
+os.environ["REDIS_ENABLED"] = "false"
 
 from src.auth import create_access_token, create_refresh_token
 from src.database import get_db
@@ -44,11 +45,11 @@ def db_session(engine, session_factory):
 @pytest.fixture()
 def app(db_session, tmp_path, monkeypatch):
     from src.main import app as fastapi_app
-    import src.routes.claims as claim_routes
+    from src.services.storage_service import storage_service
 
     upload_dir = tmp_path / "uploads" / "claim_proofs"
     upload_dir.mkdir(parents=True, exist_ok=True)
-    monkeypatch.setattr(claim_routes, "UPLOAD_DIR", str(upload_dir))
+    monkeypatch.setattr(storage_service, "upload_dir", str(upload_dir))
 
     def override_get_db():
         try:

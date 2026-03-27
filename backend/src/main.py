@@ -14,10 +14,11 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 from .config import get_settings
-from .routes import auth_router, policies_router, claims_router, storage_router
+from .routes import auth_router, policies_router, claims_router, storage_router, webhooks_router
 from .errors import StellarInsureError
 from .schemas import ErrorResponse
 from .database import engine
+from .rate_limiter import setup_rate_limiting
 
 settings = get_settings()
 
@@ -37,6 +38,10 @@ tags_metadata = [
     {
         "name": "storage",
         "description": "Secure access to uploaded proof documents.",
+    },
+    {
+        "name": "webhooks",
+        "description": "Manage webhook subscriptions for event notifications.",
     },
 ]
 
@@ -125,6 +130,9 @@ app.include_router(auth_router)
 app.include_router(policies_router)
 app.include_router(claims_router)
 app.include_router(storage_router)
+app.include_router(webhooks_router)
+
+setup_rate_limiting(app)
 
 @app.get("/health", summary="Health check", description="Checks the health status of the API service and its dependencies.")
 async def health():
@@ -148,7 +156,7 @@ async def stellar_insure_error_handler(request: Request, exc: StellarInsureError
         content=ErrorResponse(
             error_code=exc.error_code,
             detail=exc.detail
-        ).dict()
+        ).model_dump(mode="json")
     )
 
 @app.exception_handler(StarletteHTTPException)
@@ -158,7 +166,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
         content=ErrorResponse(
             error_code=f"HTTP_{exc.status_code}",
             detail=exc.detail
-        ).dict()
+        ).model_dump(mode="json")
     )
 
 @app.exception_handler(RequestValidationError)
@@ -168,7 +176,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         content=ErrorResponse(
             error_code="VAL_001",
             detail=str(exc.errors())
-        ).dict()
+        ).model_dump(mode="json")
     )
 
 @app.get("/", summary="Root endpoint", description="Returns a simple welcome message.")

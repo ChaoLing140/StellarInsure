@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field, field_validator, model_validator, EmailStr
 from .models import PolicyType, PolicyStatus
 
@@ -277,3 +277,95 @@ class TransactionResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     message: str = Field(..., description="Response message", example="Operation successful")
+
+
+# --- Webhook Schemas ---
+
+VALID_WEBHOOK_EVENTS = [
+    "policy.created", "policy.cancelled",
+    "claim.created", "claim.approved", "claim.rejected",
+]
+
+
+class WebhookCreateRequest(BaseModel):
+    url: str = Field(
+        ...,
+        min_length=1,
+        max_length=2048,
+        description="URL to deliver webhook events to",
+        example="https://example.com/webhooks/stellar"
+    )
+    event_types: List[str] = Field(
+        ...,
+        min_length=1,
+        description="List of event types to subscribe to",
+        example=["policy.created", "claim.created"]
+    )
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: str) -> str:
+        if not v.startswith(("https://", "http://")):
+            raise ValueError("Webhook URL must start with https:// or http://")
+        return v
+
+    @field_validator("event_types")
+    @classmethod
+    def validate_event_types(cls, v: List[str]) -> List[str]:
+        for event in v:
+            if event not in VALID_WEBHOOK_EVENTS:
+                raise ValueError(
+                    f"Invalid event type '{event}'. "
+                    f"Valid types: {', '.join(VALID_WEBHOOK_EVENTS)}"
+                )
+        return v
+
+
+class WebhookUpdateRequest(BaseModel):
+    url: Optional[str] = Field(None, max_length=2048, description="Updated webhook URL")
+    event_types: Optional[List[str]] = Field(None, description="Updated event types")
+    is_active: Optional[bool] = Field(None, description="Whether the webhook is active")
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and not v.startswith(("https://", "http://")):
+            raise ValueError("Webhook URL must start with https:// or http://")
+        return v
+
+    @field_validator("event_types")
+    @classmethod
+    def validate_event_types(cls, v: Optional[List[str]]) -> Optional[List[str]]:
+        if v is not None:
+            for event in v:
+                if event not in VALID_WEBHOOK_EVENTS:
+                    raise ValueError(
+                        f"Invalid event type '{event}'. "
+                        f"Valid types: {', '.join(VALID_WEBHOOK_EVENTS)}"
+                    )
+        return v
+
+
+class WebhookResponse(BaseModel):
+    id: int = Field(..., description="Webhook ID")
+    url: str = Field(..., description="Webhook delivery URL")
+    event_types: List[str] = Field(..., description="Subscribed event types")
+    is_active: bool = Field(..., description="Whether the webhook is active")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    updated_at: datetime = Field(..., description="Last update timestamp")
+
+    class Config:
+        from_attributes = True
+
+
+class WebhookDeliveryResponse(BaseModel):
+    id: int = Field(..., description="Delivery ID")
+    webhook_id: int = Field(..., description="Related webhook ID")
+    event_type: str = Field(..., description="Event type delivered")
+    response_status: Optional[int] = Field(None, description="HTTP response status code")
+    success: bool = Field(..., description="Whether delivery was successful")
+    attempts: int = Field(..., description="Number of delivery attempts")
+    created_at: datetime = Field(..., description="Delivery creation timestamp")
+
+    class Config:
+        from_attributes = True

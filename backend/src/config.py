@@ -1,7 +1,21 @@
 import os
+import logging
 from typing import List, Optional
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 from functools import lru_cache
+
+logger = logging.getLogger(__name__)
+
+# Sensitive field names that should never be logged
+_SENSITIVE_FIELDS = frozenset({
+    "jwt_secret_key",
+    "stellar_admin_secret",
+    "storage_secret_key",
+    "database_url",
+    "redis_url",
+    "webhook_secret_key",
+})
 
 
 class Settings(BaseSettings):
@@ -33,6 +47,41 @@ class Settings(BaseSettings):
     storage_secret_key: str = "storage-secret-key-change-in-production"
     base_url: str = "http://localhost:8000"
 
+    # Redis settings
+    redis_url: str = "redis://localhost:6379/0"
+    redis_cache_ttl: int = 300
+    redis_enabled: bool = True
+
+    # Rate limiting settings
+    rate_limit_default: str = "60/minute"
+    rate_limit_auth: str = "10/minute"
+    rate_limit_auth_bypass: bool = False
+
+    # Webhook settings
+    webhook_secret_key: str = "webhook-secret-key-change-in-production"
+    webhook_max_retries: int = 3
+    webhook_delivery_timeout: int = 30
+
+    # Logging
+    log_level: str = "INFO"
+
+    @field_validator("environment")
+    @classmethod
+    def validate_environment(cls, v: str) -> str:
+        allowed = {"development", "staging", "production", "test"}
+        if v not in allowed:
+            raise ValueError(f"environment must be one of {allowed}")
+        return v
+
+    @field_validator("log_level")
+    @classmethod
+    def validate_log_level(cls, v: str) -> str:
+        allowed = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+        v = v.upper()
+        if v not in allowed:
+            raise ValueError(f"log_level must be one of {allowed}")
+        return v
+
     @property
     def allowed_origins(self) -> List[str]:
         if self.environment == "production":
@@ -54,6 +103,14 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         return self.environment == "production"
 
+    def log_settings(self) -> None:
+        """Log non-sensitive settings on startup for debugging."""
+        for field_name in type(self).model_fields:
+            if field_name in _SENSITIVE_FIELDS:
+                logger.info("  %s = ****REDACTED****", field_name)
+            else:
+                logger.info("  %s = %s", field_name, getattr(self, field_name))
+
     class Config:
         env_file = ".env"
         case_sensitive = False
@@ -61,4 +118,7 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    logger.info("Settings loaded for environment: %s", settings.environment)
+    settings.log_settings()
+    return settings

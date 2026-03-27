@@ -18,6 +18,7 @@ from ..errors import (
     InvalidPolicyTimeRangeError,
     PolicyNotEligibleForClaimError
 )
+from ..cache import cache_get, cache_set, invalidate_policy_cache
 
 router = APIRouter(prefix="/policies", tags=["policies"])
 
@@ -57,6 +58,8 @@ async def create_policy(
     db.commit()
     db.refresh(policy)
     
+    invalidate_policy_cache(current_user.id)
+    
     return PolicyResponse(
         id=policy.id,
         policyholder_id=policy.policyholder_id,
@@ -91,6 +94,14 @@ async def get_user_policies(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
+    status_val = status.value if status else "all"
+    type_val = policy_type.value if policy_type else "all"
+    cache_key = f"policies:user:{current_user.id}:{status_val}:{type_val}:{page}:{per_page}"
+    
+    cached = cache_get(cache_key)
+    if cached is not None:
+        return PolicyListResponse(**cached)
+    
     query = db.query(Policy).filter(Policy.policyholder_id == current_user.id)
     
     if status:
@@ -122,13 +133,17 @@ async def get_user_policies(
         for policy in policies
     ]
     
-    return PolicyListResponse(
+    result = PolicyListResponse(
         policies=policy_responses,
         total=total,
         page=page,
         per_page=per_page,
         has_next=(offset + per_page) < total
     )
+    
+    cache_set(cache_key, result.model_dump(mode="json"))
+    
+    return result
 
 
 @router.get(
@@ -197,6 +212,8 @@ async def cancel_policy(
     
     policy.status = PolicyStatus.cancelled
     db.commit()
+    
+    invalidate_policy_cache(current_user.id)
     
     return MessageResponse(message="Policy cancelled successfully")
 

@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Request
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..models import User
@@ -20,6 +20,10 @@ from ..errors import (
     TokenExpiredError,
     UserNotFoundError
 )
+from ..rate_limiter import limiter
+from ..config import get_settings
+
+settings = get_settings()
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
@@ -55,16 +59,19 @@ def get_or_create_user(db: Session, stellar_address: str) -> User:
     responses={
         200: {"description": "Successful login, returns JWT tokens"},
         401: {"description": "Invalid wallet signature or malformed request"},
+        429: {"description": "Rate limit exceeded"},
     }
 )
+@limiter.limit(settings.rate_limit_auth)
 async def login_with_wallet(
-    request: WalletSignatureRequest,
+    request: Request,
+    body: WalletSignatureRequest,
     db: Session = Depends(get_db)
 ):
-    if not verify_stellar_signature(request.stellar_address, request.signature, request.message):
+    if not verify_stellar_signature(body.stellar_address, body.signature, body.message):
         raise InvalidSignatureError()
     
-    user = get_or_create_user(db, request.stellar_address)
+    user = get_or_create_user(db, body.stellar_address)
     
     tokens = create_tokens(user.id, user.stellar_address)
     
@@ -85,23 +92,26 @@ async def login_with_wallet(
         201: {"description": "User created successfully"},
         400: {"description": "User already exists"},
         401: {"description": "Invalid signature"},
+        429: {"description": "Rate limit exceeded"},
     }
 )
+@limiter.limit(settings.rate_limit_auth)
 async def register_with_wallet(
-    request: WalletSignatureRequest,
+    request: Request,
+    body: WalletSignatureRequest,
     db: Session = Depends(get_db)
 ):
     existing_user = db.query(User).filter(
-        User.stellar_address == request.stellar_address
+        User.stellar_address == body.stellar_address
     ).first()
     
     if existing_user:
         raise UserAlreadyExistsError("A user with this Stellar address is already registered.")
     
-    if not verify_stellar_signature(request.stellar_address, request.signature, request.message):
+    if not verify_stellar_signature(body.stellar_address, body.signature, body.message):
         raise InvalidSignatureError()
     
-    user = User(stellar_address=request.stellar_address)
+    user = User(stellar_address=body.stellar_address)
     db.add(user)
     db.commit()
     db.refresh(user)

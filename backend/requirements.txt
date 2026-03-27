@@ -13,6 +13,10 @@ python-multipart
 stellar-sdk>=9.0.0
 python-json-logger
 sentry-sdk
+slowapi
+httpx
 pytest
 pytest-cov
+pytest-asyncio
 factory-boy
+fakeredis
