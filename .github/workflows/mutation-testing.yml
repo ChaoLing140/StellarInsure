@@ -1,0 +1,111 @@
+name: Mutation Testing
+
+# Run on PRs to master and on direct pushes to master.
+# The job is intentionally kept separate from backend-ci.yml because mutation
+# runs are slow — they re-execute the test suite once per mutant — and should
+# not block fast-feedback CI.
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  mutation:
+    name: mutmut — backend mutation score
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: backend
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Prime the standard test suite first so we know the baseline is green
+      # before spending time on mutation runs.
+      - name: Verify baseline tests pass
+        env:
+          ENVIRONMENT: test
+          DATABASE_URL: sqlite://
+          JWT_SECRET_KEY: ci-test-secret
+        run: pytest --no-header -q
+
+      # Run mutmut against the source tree.
+      # `mutmut run` exits 0 even when mutants survive; the threshold check
+      # below is what enforces quality.
+      - name: Run mutmut
+        env:
+          ENVIRONMENT: test
+          DATABASE_URL: sqlite://
+          JWT_SECRET_KEY: ci-test-secret
+        run: |
+          mutmut run || true
+
+      # Emit a human-readable summary into the CI log and into a file that
+      # the upload step preserves as a build artifact.
+      - name: Report mutation results
+        run: |
+          echo "=== Mutation testing summary ==="
+          mutmut results
+          mutmut results > mutation-report.txt 2>&1 || true
+
+      # Persist the full report so reviewers can inspect surviving mutants
+      # without re-running the job.
+      - name: Upload mutation report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mutation-report
+          path: backend/mutation-report.txt
+
+      # Compute the mutation score and fail the job when it drops below the
+      # threshold defined in pyproject.toml [tool.mutmut].
+      - name: Enforce mutation score threshold
+        run: |
+          python - <<'EOF'
+          import subprocess, sys, re, tomllib
+
+          # Read threshold from pyproject.toml
+          with open("pyproject.toml", "rb") as f:
+              config = tomllib.load(f)
+          threshold = config.get("tool", {}).get("mutmut", {}).get("mutation_score_threshold", 60)
+
+          # Parse mutmut results output
+          result = subprocess.run(["mutmut", "results"], capture_output=True, text=True)
+          output = result.stdout + result.stderr
+
+          killed = len(re.findall(r"KILLED", output, re.IGNORECASE))
+          survived = len(re.findall(r"SURVIVED|survived", output))
+          total = killed + survived
+
+          if total == 0:
+              print("No mutants generated — skipping threshold check.")
+              sys.exit(0)
+
+          score = round(killed / total * 100, 1)
+          print(f"Killed:   {killed}")
+          print(f"Survived: {survived}")
+          print(f"Total:    {total}")
+          print(f"Score:    {score}%  (threshold: {threshold}%)")
+
+          if score < threshold:
+              print(f"FAIL: mutation score {score}% is below the required {threshold}%.")
+              print("Review surviving mutants with: mutmut show <id>")
+              sys.exit(1)
+
+          print(f"PASS: mutation score {score}% meets the {threshold}% threshold.")
+          EOF

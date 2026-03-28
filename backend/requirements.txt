@@ -20,3 +20,4 @@ pytest-cov
 pytest-asyncio
 factory-boy
 fakeredis
+mutmut

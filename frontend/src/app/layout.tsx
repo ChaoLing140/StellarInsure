@@ -54,7 +54,11 @@ export default function RootLayout({
             <PageTransition>{children}</PageTransition>
 
             <footer className="footer">
-              Built for transparent policy creation, automated claims, and multilingual access.
+              <span>Built for transparent policy creation, automated claims, and multilingual access.</span>
+              <nav aria-label="Legal">
+                <Link href="/legal/terms">Terms of Service</Link>
+                <Link href="/legal/privacy">Privacy Policy</Link>
+              </nav>
             </footer>
           </div>
         </LanguageProvider>

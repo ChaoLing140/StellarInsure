@@ -18,3 +18,24 @@ exclude_lines = [
     "pass",
     "raise ImportError",
 ]
+
+# ── Mutation testing (mutmut) ─────────────────────────────────────────────────
+# Run: mutmut run
+# View results: mutmut results
+# Show surviving mutants: mutmut show <id>
+[tool.mutmut]
+# Source paths to mutate — keep to business-logic modules for faster runs
+paths_to_mutate = "src/"
+# Directories and files excluded from mutation (infrastructure / glue code)
+paths_to_exclude = [
+    "src/main.py",
+    "src/database.py",
+    "src/config.py",
+    "src/cache.py",
+    "src/rate_limiter.py",
+]
+# Test runner command (same env vars as CI)
+runner = "python -m pytest tests/ -x -q --no-header"
+# Minimum acceptable mutation score (%) — CI fails below this threshold
+# Baseline: 60 %; raise incrementally as surviving mutants are fixed
+mutation_score_threshold = 60
