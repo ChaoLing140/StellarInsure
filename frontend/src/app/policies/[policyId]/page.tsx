@@ -5,6 +5,7 @@ import Link from "next/link";
 
 import { Icon } from "@/components/icon";
 import { Skeleton, SkeletonText } from "@/components/skeleton";
+import { TransactionModal } from "@/components/transaction-modal";
 
 type PolicyStatus = "Active" | "Claim Pending" | "Claim Approved";
 type ClaimStatus = "Approved" | "Pending";
@@ -130,6 +131,7 @@ export default function PolicyDetailPage({
   const [formState, setFormState] = useState<FormState>(INITIAL_FORM);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [submitState, setSubmitState] = useState<"idle" | "submitting" | "success">("idle");
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const summaryId = useId();
   const claimId = useId();
   const assistId = useId();
@@ -367,8 +369,11 @@ export default function PolicyDetailPage({
             </p>
           </div>
           <div className="policy-header__actions print-hidden">
-            <button className="cta-primary" type="button" onClick={() => window.print()}>
-              Print policy packet
+            <button className="cta-primary" type="button" onClick={() => setIsPayModalOpen(true)}>
+              Pay Premium
+            </button>
+            <button className="cta-secondary" type="button" onClick={() => window.print()}>
+              Print
             </button>
             <Link className="cta-secondary" href="/history">
               Back to history
@@ -651,6 +656,17 @@ export default function PolicyDetailPage({
           </form>
         </section>
       </section>
+
+      <TransactionModal
+        isOpen={isPayModalOpen}
+        onClose={() => setIsPayModalOpen(false)}
+        type="premium"
+        amount={currentPolicy.premium}
+        destination={currentPolicy.payoutDestination}
+        onConfirm={async () => {
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }}
+      />
     </main>
   );
 }
