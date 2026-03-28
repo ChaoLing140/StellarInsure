@@ -19,7 +19,7 @@ cargo fmt
 cargo clippy
 ```
 
-### Naming Conventions
+### Naming Convention
 - Functions: `snake_case`
 - Structs/Enums: `PascalCase`
 - Constants: `SCREAMING_SNAKE_CASE`
