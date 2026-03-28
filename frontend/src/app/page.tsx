@@ -1,16 +1,17 @@
 "use client";
 
-import React from "react";
-import { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 import { FeatureCard } from "@/components/feature-card";
 import { Icon } from "@/components/icon";
+import { TransactionModal } from "@/components/transaction-modal";
 import { useAppTranslation } from "@/i18n/provider";
 
 export default function HomePage() {
   const { locale, t } = useAppTranslation();
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const [isCreationModalOpen, setIsCreationModalOpen] = useState(false);
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -34,6 +35,13 @@ export default function HomePage() {
               <a className="cta-secondary" href="#workflow">
                 {t("hero.secondaryCta")}
               </a>
+              <button
+                className="cta-secondary"
+                type="button"
+                onClick={() => setIsCreationModalOpen(true)}
+              >
+                Create sample policy
+              </button>
               <Link className="cta-secondary" href="/policies/weather-alpha">
                 View sample policy
               </Link>
@@ -130,6 +138,18 @@ export default function HomePage() {
           </article>
         </div>
       </section>
+
+      <TransactionModal
+        isOpen={isCreationModalOpen}
+        onClose={() => setIsCreationModalOpen(false)}
+        type="creation"
+        policyType="Weather protection"
+        amount={12000}
+        destination="GCFX...J4F7"
+        onConfirm={async () => {
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }}
+      />
     </main>
   );
 }

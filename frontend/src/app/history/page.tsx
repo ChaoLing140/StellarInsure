@@ -1,9 +1,10 @@
 "use client";
 
-import React, { startTransition, useDeferredValue, useMemo, useState } from "react";
+import React, { startTransition, useEffect, useDeferredValue, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { Icon } from "@/components/icon";
+import { Skeleton } from "@/components/skeleton";
 
 type TxType = "premium" | "payout" | "refund" | "all";
 type TxStatus = "successful" | "pending" | "failed" | "all";
@@ -96,10 +97,16 @@ export default function TransactionHistoryPage() {
   const [statusFilter, setStatusFilter] = useState<TxStatus>("all");
   const [page, setPage] = useState(1);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const deferredTypeFilter = useDeferredValue(typeFilter);
   const deferredStatusFilter = useDeferredValue(statusFilter);
   const isFiltering =
     deferredTypeFilter !== typeFilter || deferredStatusFilter !== statusFilter;
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filtered = useMemo(() => {
     return MOCK_TRANSACTIONS.filter((tx) => {
@@ -198,7 +205,40 @@ export default function TransactionHistoryPage() {
         </p>
       </div>
 
-      {paginated.length === 0 ? (
+      {isLoading ? (
+        <div
+          className="tx-table-wrapper motion-panel"
+          role="region"
+          aria-label="Loading transactions"
+          aria-busy="true"
+        >
+          <span className="visually-hidden">Loading transactions, please wait.</span>
+          <table className="tx-table">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Type</th>
+                <th scope="col">Amount (XLM)</th>
+                <th scope="col">Status</th>
+                <th scope="col">Hash</th>
+                <th scope="col">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <tr key={`sk-row-${i}`} className="tx-row">
+                  <td><Skeleton style={{ height: "14px", width: "120px" }} /></td>
+                  <td><Skeleton style={{ height: "22px", width: "64px", borderRadius: "20px" }} /></td>
+                  <td><Skeleton style={{ height: "14px", width: "60px" }} /></td>
+                  <td><Skeleton style={{ height: "22px", width: "80px", borderRadius: "20px" }} /></td>
+                  <td><Skeleton style={{ height: "14px", width: "100px" }} /></td>
+                  <td><Skeleton style={{ height: "24px", width: "28px", borderRadius: "4px" }} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : paginated.length === 0 ? (
         <div className="tx-empty" role="status">
           <span className="tx-empty-icon" aria-hidden="true">
             <Icon name="document" size="lg" tone="muted" />
@@ -212,6 +252,32 @@ export default function TransactionHistoryPage() {
           aria-label="Transaction list"
           aria-busy={isFiltering}
         >
+          {isFiltering ? (
+            <table className="tx-table">
+              <thead>
+                <tr>
+                  <th scope="col">Date</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Amount (XLM)</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Hash</th>
+                  <th scope="col">Details</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={`filter-sk-${i}`} className="tx-row">
+                    <td><Skeleton style={{ height: "14px", width: "120px" }} /></td>
+                    <td><Skeleton style={{ height: "22px", width: "64px", borderRadius: "20px" }} /></td>
+                    <td><Skeleton style={{ height: "14px", width: "60px" }} /></td>
+                    <td><Skeleton style={{ height: "22px", width: "80px", borderRadius: "20px" }} /></td>
+                    <td><Skeleton style={{ height: "14px", width: "100px" }} /></td>
+                    <td><Skeleton style={{ height: "24px", width: "28px", borderRadius: "4px" }} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
           <table className="tx-table" aria-labelledby="tx-history-title">
             <thead>
               <tr>
@@ -331,6 +397,7 @@ export default function TransactionHistoryPage() {
               ))}
             </tbody>
           </table>
+          )}
         </div>
       )}
 

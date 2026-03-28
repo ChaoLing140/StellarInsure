@@ -43,10 +43,9 @@ export default function RootLayout({
 
               <nav className="nav-links" aria-label="Section navigation">
                 <Link href="/">Overview</Link>
+                <Link href="/create">Create Policy</Link>
                 <Link href="/policies/weather-alpha">Policy Detail</Link>
                 <Link href="/history">History</Link>
-                <a href="#coverage">Coverage</a>
-                <a href="#workflow">Workflow</a>
               </nav>
 
               <LanguageSwitcher />
