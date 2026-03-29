@@ -4,6 +4,7 @@ mod error;
 mod events;
 mod multisig;
 mod policy;
+mod premium;
 mod risk_pool;
 mod storage;
 mod types;
@@ -12,6 +13,23 @@ mod types;
 mod test;
 
 use soroban_sdk::{contract, contractimpl, token::TokenClient, Address, Env, String, Vec};
+
+fn expire_policy_if_needed(env: &Env, policy: &mut Policy, policy_id: u64) {
+    if policy.status == PolicyStatus::Active && policy.is_expired(env.ledger().timestamp()) {
+        let expired_at = env.ledger().timestamp();
+        policy.status = PolicyStatus::Expired;
+        storage::set_policy(env, policy_id, policy);
+        events::publish_policy_expired(
+            env,
+            &PolicyExpiredEvent {
+                policy_id,
+                policyholder: policy.policyholder.clone(),
+                end_time: policy.end_time,
+                expired_at,
+            },
+        );
+    }
+}
 
 pub use error::Error;
 pub use risk_pool::{RiskPool, RiskPoolClient};
@@ -118,7 +136,9 @@ impl StellarInsure {
         if storage::is_paused(&env) {
             return Err(Error::ContractPaused);
         }
-        let policy = storage::get_policy(&env, policy_id)?;
+        let mut policy = storage::get_policy(&env, policy_id)?;
+
+        expire_policy_if_needed(&env, &mut policy, policy_id);
 
         if policy.status != PolicyStatus::Active {
             return Err(Error::PolicyNotActive);
@@ -176,6 +196,7 @@ impl StellarInsure {
         }
 
         if env.ledger().timestamp() > policy.end_time {
+            expire_policy_if_needed(&env, &mut policy, policy_id);
             return Err(Error::PolicyExpired);
         }
 
@@ -273,6 +294,27 @@ impl StellarInsure {
         );
 
         Ok(())
+    }
+
+    /// Calculate the premium for a prospective policy without creating it.
+    ///
+    /// This is a read-only helper so callers can present accurate pricing
+    /// in a UI before the policyholder commits to paying gas.
+    ///
+    /// # Arguments
+    /// * `policy_type`      – insurance category that drives the actuarial rate
+    /// * `coverage_amount`  – desired maximum payout in stroops (> 0)
+    /// * `duration_seconds` – intended policy lifetime in seconds (> 0)
+    ///
+    /// # Returns
+    /// The required premium in stroops.
+    pub fn calculate_premium(
+        _env: Env,
+        policy_type: PolicyType,
+        coverage_amount: i128,
+        duration_seconds: u64,
+    ) -> Result<i128, Error> {
+        premium::calculate_premium(&policy_type, coverage_amount, duration_seconds)
     }
 
     /// Get policy details
@@ -534,8 +576,8 @@ impl StellarInsure {
             return Err(Error::InvalidDuration);
         }
 
-        // Only Active policies can be renewed
-        if policy.status != PolicyStatus::Active {
+        // Active and Expired (within grace period) policies can be renewed
+        if policy.status != PolicyStatus::Active && policy.status != PolicyStatus::Expired {
             return Err(Error::PolicyNotRenewable);
         }
 
@@ -581,6 +623,17 @@ impl StellarInsure {
                 renewal_premium,
             },
         );
+
+        Ok(())
+    }
+
+    /// Check expiration status for a policy, transitioning Active→Expired if needed.
+    /// Returns the current PolicyStatus after the check.
+    pub fn check_expiration(env: Env, policy_id: u64) -> Result<PolicyStatus, Error> {
+        let mut policy = storage::get_policy(&env, policy_id)?;
+        expire_policy_if_needed(&env, &mut policy, policy_id);
+        Ok(policy.status)
+    }
 
     /// Get current contract version
     pub fn version(env: Env) -> u32 {

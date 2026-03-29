@@ -3,9 +3,11 @@ import React from "react";
 export type IconName =
   | "alert"
   | "calendar"
+  | "check"
   | "clock"
   | "document"
   | "globe"
+  | "heart"
   | "language"
   | "shield"
   | "spark"
@@ -67,6 +69,8 @@ function getPath(name: IconName) {
           <path d="M3 10h18" />
         </>
       );
+    case "check":
+      return <path d="M5 12l5 5L20 7" />;
     case "clock":
       return (
         <>
@@ -82,6 +86,10 @@ function getPath(name: IconName) {
           <path d="M9 13h6" />
           <path d="M9 17h6" />
         </>
+      );
+    case "heart":
+      return (
+        <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8Z" />
       );
     case "globe":
       return (

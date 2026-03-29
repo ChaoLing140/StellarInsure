@@ -37,7 +37,7 @@ StellarInsure is a **parametric insurance protocol** where:
 
 ---
 
-## How It Works
+## How It Works -
 
 ### Parametric Insurance Model
 

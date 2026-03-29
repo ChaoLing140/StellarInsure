@@ -50,4 +50,41 @@ describe("PolicyDetailPage", () => {
     expect(screen.getByText(/enter a valid email address/i)).toBeInTheDocument();
     expect(screen.getByText(/enter a phone number/i)).toBeInTheDocument();
   });
+
+  it("formats the review amount and rejects values above coverage", () => {
+    render(<PolicyDetailPage params={{ policyId: "weather-alpha" }} />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    const amountInput = screen.getByLabelText(/review amount/i);
+    fireEvent.change(amountInput, { target: { value: "12500" } });
+
+    expect(amountInput).toHaveValue("12,500");
+
+    fireEvent.click(screen.getByRole("button", { name: /save handoff draft/i }));
+
+    expect(screen.getByText(/requested review amount cannot exceed the policy coverage/i)).toBeInTheDocument();
+  });
+
+  it("renders the error state when policy data cannot be loaded", () => {
+    render(<PolicyDetailPage params={{ policyId: "sync-check" }} />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(screen.getByRole("heading", { name: /policy data is temporarily unavailable/i })).toBeInTheDocument();
+  });
+
+  it("renders the empty state when the requested policy does not exist", () => {
+    render(<PolicyDetailPage params={{ policyId: "missing-policy" }} />);
+
+    act(() => {
+      vi.runAllTimers();
+    });
+
+    expect(screen.getByRole("heading", { name: /policy not found/i })).toBeInTheDocument();
+  });
 });

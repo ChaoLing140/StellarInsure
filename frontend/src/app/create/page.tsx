@@ -3,29 +3,29 @@ import type { Metadata } from "next";
 import { StructuredData } from "@/components/structured-data";
 import { buildMetadata, webPageStructuredData } from "@/lib/seo";
 
-import TransactionHistoryPageClient from "./history-page-client";
+import CreatePolicyPageClient from "./create-page-client";
 
-const PAGE_TITLE = "Transaction History";
-const PAGE_DESCRIPTION = "Review premium payments, claim payouts, and refunds with filters and direct Stellar Explorer links.";
+const PAGE_TITLE = "Create Policy";
+const PAGE_DESCRIPTION = "Configure coverage, pick oracle providers, and submit Stellar-based parametric insurance policies with guided steps.";
 
 export const metadata: Metadata = buildMetadata({
   title: PAGE_TITLE,
   description: PAGE_DESCRIPTION,
-  pathname: "/history",
-  keywords: ["transaction history", "Stellar Explorer", "premium payments", "claim payouts"],
+  pathname: "/create",
+  keywords: ["create policy", "oracle selector", "Stellar wallet", "insurance receipt"],
 });
 
-export default function TransactionHistoryPage() {
+export default function CreatePolicyPage() {
   return (
     <>
       <StructuredData
         data={webPageStructuredData({
           title: `${PAGE_TITLE} | StellarInsure`,
           description: PAGE_DESCRIPTION,
-          pathname: "/history",
+          pathname: "/create",
         })}
       />
-      <TransactionHistoryPageClient />
+      <CreatePolicyPageClient />
     </>
   );
 }
