@@ -569,12 +569,25 @@ export default function CreatePolicyPageClient() {
 
             <label className="field">
               <span className="field__label">Duration (days)</span>
+              <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-2)", flexWrap: "wrap" }}>
+                {[30, 90, 180, 365].map((days) => (
+                  <button
+                    key={days}
+                    type="button"
+                    className="cta-secondary"
+                    style={draft.duration === String(days) ? { borderColor: "var(--color-primary)", background: "var(--color-surface)", color: "var(--color-primary)" } : {}}
+                    onClick={() => updateDraft("duration", String(days))}
+                  >
+                    {days} Days
+                  </button>
+                ))}
+              </div>
               <input
                 className="field__input"
                 type="number"
                 inputMode="numeric"
                 min="1"
-                placeholder="e.g. 90"
+                placeholder="e.g. custom duration days"
                 value={draft.duration}
                 onChange={(event) => updateDraft("duration", event.target.value)}
               />

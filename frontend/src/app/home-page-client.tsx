@@ -68,6 +68,35 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section id="features" aria-labelledby="features-title">
+        <div className="section-header">
+          <span className="eyebrow">Protocol Features</span>
+          <h2 id="features-title">Why StellarInsure</h2>
+          <p>Built on Stellar for maximum reliability and minimum friction.</p>
+        </div>
+
+        <div className="feature-grid">
+          <FeatureCard
+            icon="wallet"
+            title="Transparent Policy Creation"
+            description="Clear actuarial rules combined with smart contract commitments."
+            bullets={["On-chain terms", "Immutable coverage"]}
+          />
+          <FeatureCard
+            icon="shield"
+            title="Decentralized Oracle Verification"
+            description="Trustless resolution powered by verifiable data feeds."
+            bullets={["Secure data bridges", "Tamper-proof execution"]}
+          />
+          <FeatureCard
+            icon="spark"
+            title="Instant Automated Payouts"
+            description="No claims adjusters. Payouts trigger automatically via smart contracts."
+            bullets={["Zero wait time", "Direct to wallet"]}
+          />
+        </div>
+      </section>
+
       <section id="coverage" aria-labelledby="coverage-title">
         <div className="section-header">
           <span className="eyebrow">{t("coverage.badge")}</span>

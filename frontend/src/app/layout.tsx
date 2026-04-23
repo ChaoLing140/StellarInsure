@@ -74,6 +74,7 @@ export default function RootLayout({
       <body>
         <LanguageProvider>
           <WalletProvider>
+            <script defer data-domain="stellarinsure.io" src="https://plausible.io/js/script.js"></script>
             <StructuredData data={organizationStructuredData()} />
             <StructuredData data={websiteStructuredData()} />
             <OnboardingFlow />
