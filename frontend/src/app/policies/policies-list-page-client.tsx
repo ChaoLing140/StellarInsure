@@ -7,6 +7,7 @@ import { Icon, type IconName } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 import { StatusPill } from "@/components/status-pill";
 import { PolicyTable } from "@/components/policy-table";
+import { useAppTranslation } from "@/i18n/provider";
 
 type PolicyStatus = "active" | "pending" | "expired" | "claimed" | "all";
 type PolicyType = "weather" | "flight" | "smart-contract" | "asset" | "health" | "all";
@@ -167,7 +168,6 @@ function PolicyCard({ policy }: { policy: Policy }) {
 }
 
 export default function PoliciesListPageClient() {
-  const { t } = useAppTranslation();
   const { t } = useAppTranslation();
   const [statusFilter, setStatusFilter] = useState<PolicyStatus>("all");
   const [typeFilter, setTypeFilter] = useState<PolicyType>("all");
