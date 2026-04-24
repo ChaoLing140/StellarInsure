@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Icon } from "@/components/icon";
+import { ClaimEligibilityChecker } from "@/components/claim-eligibility-checker";
 
 export type ClaimType = "flight_delay" | "weather" | "crop_failure" | "parametric";
 
@@ -193,6 +194,16 @@ export function ClaimSubmissionForm({
             required
           />
         </div>
+
+        {/* Eligibility Check */}
+        {formData.policyId && (
+          <div className="claim-field">
+            <ClaimEligibilityChecker
+              policyId={formData.policyId}
+              claimType={formData.claimType}
+            />
+          </div>
+        )}
 
         {/* Claim Type */}
         <div className="claim-field">
