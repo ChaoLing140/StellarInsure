@@ -1,11 +1,11 @@
 const en = {
   hero: {
-    badge: "Accessible by default",
-    title: "Automated insurance that remains readable, reachable, and ready for every user.",
+    badge: "Trustless Protection",
+    title: "Parametric Insurance: Payouts without the paperwork.",
     description:
-      "StellarInsure delivers parametric coverage flows with keyboard-friendly navigation, screen-reader-aware structure, and localized product language from the first render.",
-    primaryCta: "Explore coverage",
-    secondaryCta: "Review workflow",
+      "Get protected against verifiable events. No claims adjusters, no delays—just instant, automated payouts directly to your Stellar wallet.",
+    primaryCta: "Explore Coverage",
+    secondaryCta: "How it works",
     metricsLabel: "Key metrics",
   },
   metrics: {

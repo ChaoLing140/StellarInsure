@@ -323,6 +323,17 @@ textarea {
   background: var(--surface-wash);
   backdrop-filter: blur(14px);
   box-shadow: var(--shadow);
+  transition: transform var(--duration-base) var(--easing-standard), box-shadow var(--duration-base) var(--easing-standard);
+}
+
+.hero-card--featured {
+  background: linear-gradient(165deg, var(--surface-wash) 0%, rgba(31, 122, 140, 0.05) 100%);
+  border-color: rgba(31, 122, 140, 0.2);
+}
+
+.hero-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-200);
 }
 
 .hero-card,
@@ -396,6 +407,15 @@ h1 {
   line-height: 0.96;
 }
 
+.hero-title {
+  font-size: clamp(2.5rem, 8vw, 4.8rem);
+  line-height: 0.92;
+  margin-bottom: var(--space-4);
+  background: linear-gradient(to bottom right, var(--text), var(--accent-strong));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
 h2 {
   font-size: var(--step-4);
   line-height: 1.05;
@@ -450,6 +470,11 @@ dt,
   max-width: 60ch;
 }
 
+.hero-description {
+  font-size: var(--step-2);
+  margin-bottom: var(--space-5);
+}
+
 .hero h1:focus {
   outline: none;
 }
@@ -462,6 +487,15 @@ dt,
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+.hero-cta {
+  margin-bottom: var(--space-5);
+}
+
+.hero-secondary-actions {
+  gap: 1.5rem;
+  opacity: 0.8;
 }
 
 .nav-links a,
@@ -500,6 +534,19 @@ dt,
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
+  transition: transform 0.1s active, filter 0.1s;
+}
+
+.cta-primary:active,
+.cta-secondary:active {
+  transform: scale(0.98);
+}
+
+.cta-primary--large,
+.cta-secondary--large {
+  min-height: 3.5rem;
+  padding: 1rem 2rem;
+  font-size: var(--step-1);
 }
 
 .cta-primary,
@@ -509,11 +556,39 @@ dt,
   border: none;
 }
 
+.cta-primary:hover {
+  filter: brightness(1.2);
+}
+
 .cta-secondary,
 .ob-btn--ghost {
   background: var(--surface);
   color: var(--surface-strong);
   border-color: var(--card-border);
+}
+
+.cta-secondary:hover {
+  background: var(--surface-wash);
+}
+
+.cta-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: var(--step-0);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--duration-fast);
+}
+
+.cta-text:hover {
+  color: var(--accent-strong);
+  text-decoration: underline;
 }
 
 .metrics {
@@ -525,6 +600,11 @@ dt,
   display: grid;
   gap: 0.35rem;
   padding: 1.25rem;
+}
+
+.metric--highlight {
+  border-color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .metric svg {
