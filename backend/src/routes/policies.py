@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -19,8 +20,10 @@ from ..errors import (
     PolicyNotEligibleForClaimError
 )
 from ..cache import cache_get, cache_set, invalidate_policy_cache
+from ..services.webhook_service import dispatch_webhook_event
 
 router = APIRouter(prefix="/policies", tags=["policies"])
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -59,6 +62,22 @@ async def create_policy(
     db.refresh(policy)
     
     invalidate_policy_cache(current_user.id)
+
+    try:
+        dispatch_webhook_event(
+            db=db,
+            user_id=current_user.id,
+            event_type="policy.created",
+            payload={
+                "policy_id": policy.id,
+                "policy_type": policy.policy_type.value,
+                "status": policy.status.value,
+                "coverage_amount": float(policy.coverage_amount),
+                "premium": float(policy.premium),
+            },
+        )
+    except Exception:
+        logger.exception("Failed to dispatch policy.created webhook for policy_id=%s", policy.id)
     
     return PolicyResponse(
         id=policy.id,
@@ -214,6 +233,19 @@ async def cancel_policy(
     db.commit()
     
     invalidate_policy_cache(current_user.id)
+
+    try:
+        dispatch_webhook_event(
+            db=db,
+            user_id=current_user.id,
+            event_type="policy.cancelled",
+            payload={
+                "policy_id": policy.id,
+                "status": policy.status.value,
+            },
+        )
+    except Exception:
+        logger.exception("Failed to dispatch policy.cancelled webhook for policy_id=%s", policy.id)
     
     return MessageResponse(message="Policy cancelled successfully")
 
@@ -264,6 +296,21 @@ async def submit_claim(
     db.add(claim)
     db.commit()
     db.refresh(claim)
+
+    try:
+        dispatch_webhook_event(
+            db=db,
+            user_id=current_user.id,
+            event_type="claim.created",
+            payload={
+                "claim_id": claim.id,
+                "policy_id": claim.policy_id,
+                "claim_amount": float(claim.claim_amount),
+                "approved": claim.approved,
+            },
+        )
+    except Exception:
+        logger.exception("Failed to dispatch claim.created webhook for claim_id=%s", claim.id)
     
     return ClaimResponse(
         id=claim.id,
