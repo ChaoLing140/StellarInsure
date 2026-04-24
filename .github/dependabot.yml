@@ -1,0 +1,43 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+    pull-request-branch-name:
+      separator: "/"
+    reviewers:
+      - sshdopey
+    allow:
+      - dependency-type: all
+    rebase-strategy: auto
+
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+    pull-request-branch-name:
+      separator: "/"
+    reviewers:
+      - sshdopey
+    allow:
+      - dependency-type: all
+    rebase-strategy: auto
+
+  - package-ecosystem: cargo
+    directory: /smartcontract
+    schedule:
+      interval: weekly
+      day: monday
+      time: "03:00"
+    pull-request-branch-name:
+      separator: "/"
+    reviewers:
+      - sshdopey
+    allow:
+      - dependency-type: all
+    rebase-strategy: auto

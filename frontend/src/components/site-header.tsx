@@ -8,6 +8,8 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { NetworkSwitcher } from "@/components/network-switcher";
 import { WalletConnectionButton } from "@/components/wallet-connection-button";
 import { CommandPalette } from "@/components/command-palette";
+import { NotificationsPanel } from "@/components/notifications-panel";
+import { Icon } from "@/components/icon";
 
 type NavItem = {
   href: string;
@@ -62,6 +64,7 @@ function getPageContext(pathname: string) {
 export function SiteHeader() {
   const pathname = usePathname() ?? "/";
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const context = useMemo(() => getPageContext(pathname), [pathname]);
 
   function closeDrawer() {
@@ -104,6 +107,14 @@ export function SiteHeader() {
         </nav>
 
         <div className="topbar-actions topbar-actions--desktop">
+          <button
+            className="topbar-action-btn"
+            onClick={() => setNotificationsOpen(true)}
+            aria-label="Open notifications"
+            title="Notifications"
+          >
+            <Icon name="bell" size="md" tone="muted" />
+          </button>
           <CommandPalette />
           <NetworkSwitcher />
           <WalletConnectionButton />
@@ -141,6 +152,11 @@ export function SiteHeader() {
         <h2>{context.title}</h2>
         <p>{context.description}</p>
       </section>
+
+      <NotificationsPanel
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+      />
     </>
   );
 }
