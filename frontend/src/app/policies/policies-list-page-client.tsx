@@ -5,6 +5,8 @@ import Link from "next/link";
 
 import { Icon, type IconName } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
+import { StatusPill } from "@/components/status-pill";
+import { PolicyTable } from "@/components/policy-table";
 
 type PolicyStatus = "active" | "pending" | "expired" | "claimed" | "all";
 type PolicyType = "weather" | "flight" | "smart-contract" | "asset" | "health" | "all";
@@ -118,16 +120,7 @@ function formatCurrency(amount: number): string {
   return `$${amount.toFixed(2)}`;
 }
 
-function StatusBadge({ status }: { status: Exclude<PolicyStatus, "all"> }) {
-  const { label, tone } = POLICY_STATUS_DISPLAY[status];
-  const toneClass = {
-    success: "policy-badge--success",
-    warning: "policy-badge--warning",
-    danger: "policy-badge--danger",
-  }[tone];
-
-  return <span className={`policy-badge ${toneClass}`}>{label}</span>;
-}
+// Internal StatusBadge removed in favor of StatusPill
 
 function PolicyCard({ policy }: { policy: Policy }) {
   const typeDisplay = POLICY_TYPE_DISPLAY[policy.type as PolicyType];
@@ -138,7 +131,7 @@ function PolicyCard({ policy }: { policy: Policy }) {
         <div className="policy-card__header">
           <div className="policy-card__title-group">
             <h3>{policy.title}</h3>
-            <StatusBadge status={policy.status} />
+            <StatusPill status={policy.status as any} />
           </div>
           <div className="policy-card__icon">
             <Icon name={typeDisplay.icon} size="md" tone="accent" />
@@ -183,6 +176,7 @@ export default function PoliciesListPageClient() {
   const [maxCoverage, setMaxCoverage] = useState<number>(50000);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [isLoading, setIsLoading] = useState(true);
 
   const deferredStatusFilter = useDeferredValue(statusFilter);
@@ -214,7 +208,7 @@ export default function PoliciesListPageClient() {
       const matchCoverage =
         policy.coverageAmount >= deferredMinCoverage &&
         policy.coverageAmount <= deferredMaxCoverage;
-      
+
       let matchDateRange = true;
       if (deferredStartDate) {
         matchDateRange =
@@ -226,7 +220,7 @@ export default function PoliciesListPageClient() {
           matchDateRange &&
           new Date(policy.createdAt) <= new Date(deferredEndDate);
       }
-      
+
       return matchStatus && matchType && matchCoverage && matchDateRange;
     });
   }, [
@@ -302,6 +296,22 @@ export default function PoliciesListPageClient() {
         <span className="eyebrow">{t("policyList.eyebrow")}</span>
         <h1 id="policies-title">{t("policyList.title")}</h1>
         <p>{t("policyList.desc")}</p>
+        <div className="view-toggle">
+          <button
+            className={`view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+            onClick={() => setViewMode("grid")}
+            aria-label="Grid view"
+          >
+            <Icon name="grid-3x3" size="sm" />
+          </button>
+          <button
+            className={`view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+            onClick={() => setViewMode("table")}
+            aria-label="Table view"
+          >
+            <Icon name="list" size="sm" />
+          </button>
+        </div>
       </div>
 
       <div className="policy-filters motion-panel" role="search" aria-label="Filter and sort policies">
@@ -436,11 +446,15 @@ export default function PoliciesListPageClient() {
             {t("policies.empty.cta")}
           </Link>
         </div>
-      ) : (
+      ) : viewMode === "grid" ? (
         <div className={`policy-grid motion-panel ${isFiltering ? "policy-grid--loading" : ""}`}>
           {sorted.map((policy) => (
             <PolicyCard key={policy.id} policy={policy} />
           ))}
+        </div>
+      ) : (
+        <div className={`policy-table-view motion-panel ${isFiltering ? "policy-grid--loading" : ""}`}>
+          <PolicyTable policies={sorted as any} />
         </div>
       )}
     </main>

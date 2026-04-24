@@ -188,12 +188,6 @@ function SuccessReceipt({
   onCreateAnother: () => void;
 }) {
   const { t } = useAppTranslation();
-  receipt,
-  onCreateAnother,
-}: {
-  receipt: ReceiptData;
-  onCreateAnother: () => void;
-}) {
   const [receiptMessage, setReceiptMessage] = useState(
     "Use share or download to keep a local handoff record.",
   );
@@ -446,7 +440,7 @@ export default function CreatePolicyPageClient() {
     try {
       // Dummy transaction (in a real app, you'd build a proper Soroban transaction)
       const dummyTx = "AAAAAgAAAAA6V+GyS5x1u+WCzONvDjqnqF6nWCAf3g4pY9qpArIB";
-      
+
       const sigPromise = signTransaction(dummyTx, {
         network: "TESTNET",
       });
@@ -572,7 +566,7 @@ export default function CreatePolicyPageClient() {
                 onChange={(event) => updateDraft("premium", event.target.value)}
               />
               <span className="field__hint">{t("createPolicy.configSection.premiumHint")}</span>
-              
+
               <div style={{ marginTop: "var(--space-4)" }}>
                 <PremiumEstimate
                   isLoading={isEstimating}
@@ -594,7 +588,7 @@ export default function CreatePolicyPageClient() {
 
             <div className="field field--full" id="trigger-input">
               <span className="field__label">{t("createPolicy.configSection.triggerLabel")}</span>
-              <TriggerConditionBuilder 
+              <TriggerConditionBuilder
                 onChange={(val) => updateDraft("triggerCondition", val)}
               />
               <span className="field__hint">

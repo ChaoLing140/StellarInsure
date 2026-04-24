@@ -18,7 +18,10 @@ export type IconName =
   | "help"
   | "refresh"
   | "plus"
-  | "close";
+  | "close"
+  | "grid-3x3"
+  | "list"
+  | "chevron-up-down";
 
 type IconSize = "sm" | "md" | "lg";
 type IconTone =
@@ -176,6 +179,33 @@ function getPath(name: IconName) {
         <>
           <path d="M18 6 6 18" />
           <path d="M6 6l12 12" />
+        </>
+      );
+    case "grid-3x3":
+      return (
+        <>
+          <rect width="7" height="7" x="3" y="3" rx="1" />
+          <rect width="7" height="7" x="14" y="3" rx="1" />
+          <rect width="7" height="7" x="3" y="14" rx="1" />
+          <rect width="7" height="7" x="14" y="14" rx="1" />
+        </>
+      );
+    case "list":
+      return (
+        <>
+          <line x1="8" x2="21" y1="6" y2="6" />
+          <line x1="8" x2="21" y1="12" y2="12" />
+          <line x1="8" x2="21" y1="18" y2="18" />
+          <line x1="3" x2="3.01" y1="6" y2="6" />
+          <line x1="3" x2="3.01" y1="12" y2="12" />
+          <line x1="3" x2="3.01" y1="18" y2="18" />
+        </>
+      );
+    case "chevron-up-down":
+      return (
+        <>
+          <path d="m7 15 5 5 5-5" />
+          <path d="m7 9 5-5 5 5" />
         </>
       );
   }

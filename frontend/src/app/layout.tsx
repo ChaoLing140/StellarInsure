@@ -73,30 +73,31 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <LanguageProvider>
-          <WalletProvider>
-            <script defer data-domain="stellarinsure.io" src="https://plausible.io/js/script.js"></script>
-            <StructuredData data={organizationStructuredData()} />
-            <StructuredData data={websiteStructuredData()} />
-            <OnboardingFlow />
-            <OnboardingTooltips />
-            <a className="skip-link" href="#main-content">
-              Skip to main content
-            </a>
-            <div className="page-shell">
-              <MaintenanceBanner />
-              <SiteHeader />
+        <ErrorBoundary>
+          <LanguageProvider>
+            <WalletProvider>
+              <script defer data-domain="stellarinsure.io" src="https://plausible.io/js/script.js"></script>
+              <StructuredData data={organizationStructuredData()} />
+              <StructuredData data={websiteStructuredData()} />
+              <OnboardingFlow />
+              <OnboardingTooltips />
+              <a className="skip-link" href="#main-content">
+                Skip to main content
+              </a>
+              <div className="page-shell">
+                <MaintenanceBanner />
+                <SiteHeader />
 
-              <PageTransition>{children}</PageTransition>
+                <PageTransition>{children}</PageTransition>
 
-              <footer className="footer">
-                <span>Built for transparent policy creation, automated claims, and multilingual access.</span>
-                <nav aria-label="Legal">
-                  <Link href="/legal/terms">Terms of Service</Link>
-                  <Link href="/legal/privacy">Privacy Policy</Link>
-                </nav>
-              </footer>
-            </div>
+                <footer className="footer">
+                  <span>Built for transparent policy creation, automated claims, and multilingual access.</span>
+                  <nav aria-label="Legal">
+                    <Link href="/legal/terms">Terms of Service</Link>
+                    <Link href="/legal/privacy">Privacy Policy</Link>
+                  </nav>
+                </footer>
+              </div>
             </WalletProvider>
           </LanguageProvider>
         </ErrorBoundary>
