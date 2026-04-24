@@ -8,6 +8,7 @@ import { FeatureCard } from "@/components/feature-card";
 import { Icon } from "@/components/icon";
 import { PolicyMetricsCharts } from "@/components/policy-metrics-charts";
 import { TransactionModal } from "@/components/transaction-modal";
+import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import { useAppTranslation } from "@/i18n/provider";
 
 export default function HomePage() {
@@ -21,6 +22,7 @@ export default function HomePage() {
 
   return (
     <main id="main-content">
+      <OnboardingChecklist />
       <section className="hero" id="overview" aria-labelledby="hero-title">
         <div className="hero-grid">
           <article className="hero-card">

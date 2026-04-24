@@ -21,6 +21,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/create", label: "Create Policy" },
   { href: "/policies", label: "My Policies" },
   { href: "/history", label: "History" },
+  { href: "/treasury", label: "Treasury" },
   { href: "/settings", label: "Preferences" },
 ];
 
@@ -40,6 +41,10 @@ const PAGE_CONTEXT: Record<string, { title: string; description: string }> = {
   "/history": {
     title: "Transaction History",
     description: "Inspect premium, payout, and refund events with explorer deep links.",
+  },
+  "/treasury": {
+    title: "Treasury",
+    description: "Manage your risk pool deposits and initiate cooldown-based withdrawals.",
   },
 };
 

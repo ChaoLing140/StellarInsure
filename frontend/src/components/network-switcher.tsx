@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Icon } from "@/components/icon";
+import { useAppTranslation } from "@/i18n/provider";
 
 export type NetworkType = "mainnet" | "testnet";
 
@@ -90,9 +91,8 @@ export function NetworkSwitcher({
             <button
               key={network.id}
               type="button"
-              className={`network-switcher__option ${
-                selectedNetwork === network.id ? "is-selected" : ""
-              }`}
+              className={`network-switcher__option ${selectedNetwork === network.id ? "is-selected" : ""
+                }`}
               onClick={() => handleNetworkSelect(network.id)}
               role="option"
               aria-selected={selectedNetwork === network.id}

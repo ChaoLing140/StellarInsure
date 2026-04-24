@@ -18,7 +18,18 @@ export type IconName =
   | "help"
   | "refresh"
   | "plus"
-  | "close";
+  | "close"
+  | "grid-3x3"
+  | "list"
+  | "chevron-up-down"
+  | "zap"
+  | "alert-triangle"
+  | "activity"
+  | "layers"
+  | "trending-up"
+  | "trending-down"
+  | "verify"
+  | "alert-circle";
 
 type IconSize = "sm" | "md" | "lg";
 type IconTone =
@@ -176,6 +187,82 @@ function getPath(name: IconName) {
         <>
           <path d="M18 6 6 18" />
           <path d="M6 6l12 12" />
+        </>
+      );
+    case "grid-3x3":
+      return (
+        <>
+          <rect width="7" height="7" x="3" y="3" rx="1" />
+          <rect width="7" height="7" x="14" y="3" rx="1" />
+          <rect width="7" height="7" x="3" y="14" rx="1" />
+          <rect width="7" height="7" x="14" y="14" rx="1" />
+        </>
+      );
+    case "list":
+      return (
+        <>
+          <line x1="8" x2="21" y1="6" y2="6" />
+          <line x1="8" x2="21" y1="12" y2="12" />
+          <line x1="8" x2="21" y1="18" y2="18" />
+          <line x1="3" x2="3.01" y1="6" y2="6" />
+          <line x1="3" x2="3.01" y1="12" y2="12" />
+          <line x1="3" x2="3.01" y1="18" y2="18" />
+        </>
+      );
+    case "chevron-up-down":
+      return (
+        <>
+          <path d="m7 15 5 5 5-5" />
+          <path d="m7 9 5-5 5 5" />
+        </>
+      );
+    case "zap":
+      return <path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z" />;
+    case "alert-triangle":
+      return (
+        <>
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+          <path d="M12 9v4" />
+          <path d="M12 17h.01" />
+        </>
+      );
+    case "activity":
+      return <path d="M22 12h-4l-3 9L9 3l-3 9H2" />;
+    case "layers":
+      return (
+        <>
+          <path d="M12 2 2 7l10 5 10-5-10-5Z" />
+          <path d="m2 17 10 5 10-5" />
+          <path d="m2 12 10 5 10-5" />
+        </>
+      );
+    case "trending-up":
+      return (
+        <>
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
+          <polyline points="17 6 23 6 23 12" />
+        </>
+      );
+    case "trending-down":
+      return (
+        <>
+          <polyline points="23 18 13.5 8.5 8.5 13.5 1 6" />
+          <polyline points="17 18 23 18 23 12" />
+        </>
+      );
+    case "verify":
+      return (
+        <>
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="m9 12 2 2 4-4" />
+        </>
+      );
+    case "alert-circle":
+      return (
+        <>
+          <circle cx="12" cy="12" r="10" />
+          <line x1="12" x2="12" y1="8" y2="12" />
+          <line x1="12" x2="12.01" y1="16" y2="16" />
         </>
       );
   }
