@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DashboardWidget,
   StatMetric,
   ChartContainer,
 } from "@/components/dashboard-widget";
+import { Icon } from "@/components/icon";
 
 interface AnalyticsData {
   activePolicies: number;
@@ -32,15 +33,144 @@ const MOCK_ANALYTICS_DATA: AnalyticsData = {
   weeklyChange: 12.5,
 };
 
-interface AnalyticsDashboardProps {
-  onDataUpdate?: (data: AnalyticsData) => void;
+export interface DateRange {
+  startDate: string;
+  endDate: string;
 }
 
-export function AnalyticsDashboard({ onDataUpdate }: AnalyticsDashboardProps) {
-  const { t } = useAppTranslation();
+const PRESET_RANGES: { label: string; getDates: () => DateRange }[] = [
+  {
+    label: "Last 30 days",
+    getDates: () => {
+      const end = new Date();
+      const start = new Date(end);
+      start.setDate(start.getDate() - 30);
+      return {
+        startDate: start.toISOString().split("T")[0],
+        endDate: end.toISOString().split("T")[0],
+      };
+    },
+  },
+  {
+    label: "Last 90 days",
+    getDates: () => {
+      const end = new Date();
+      const start = new Date(end);
+      start.setDate(start.getDate() - 90);
+      return {
+        startDate: start.toISOString().split("T")[0],
+        endDate: end.toISOString().split("T")[0],
+      };
+    },
+  },
+  {
+    label: "This year",
+    getDates: () => {
+      const end = new Date();
+      return {
+        startDate: `${end.getFullYear()}-01-01`,
+        endDate: end.toISOString().split("T")[0],
+      };
+    },
+  },
+];
+
+function DateRangePicker({
+  value,
+  onChange,
+}: {
+  value: DateRange;
+  onChange: (range: DateRange) => void;
+}) {
+  const today = new Date().toISOString().split("T")[0];
+
+  return (
+    <div className="analytics-date-picker" role="group" aria-label="Date range filter">
+      <div className="analytics-date-presets">
+        {PRESET_RANGES.map(({ label, getDates }) => (
+          <button
+            key={label}
+            type="button"
+            className="analytics-preset-btn"
+            onClick={() => onChange(getDates())}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="analytics-date-inputs">
+        <div className="analytics-date-field">
+          <label className="analytics-date-label" htmlFor="analytics-start">
+            From
+          </label>
+          <input
+            id="analytics-start"
+            type="date"
+            className="analytics-date-input"
+            value={value.startDate}
+            max={value.endDate || today}
+            onChange={(e) => onChange({ ...value, startDate: e.target.value })}
+          />
+        </div>
+        <span className="analytics-date-separator" aria-hidden="true">
+          <Icon name="arrow-up-right" size="sm" tone="muted" />
+        </span>
+        <div className="analytics-date-field">
+          <label className="analytics-date-label" htmlFor="analytics-end">
+            To
+          </label>
+          <input
+            id="analytics-end"
+            type="date"
+            className="analytics-date-input"
+            value={value.endDate}
+            min={value.startDate}
+            max={today}
+            onChange={(e) => onChange({ ...value, endDate: e.target.value })}
+          />
+        </div>
+        {(value.startDate || value.endDate) && (
+          <button
+            type="button"
+            className="analytics-date-clear"
+            aria-label="Clear date range"
+            onClick={() => onChange({ startDate: "", endDate: "" })}
+          >
+            <Icon name="close" size="sm" tone="muted" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface AnalyticsDashboardProps {
+  onDataUpdate?: (data: AnalyticsData) => void;
+  initialDateRange?: DateRange;
+}
+
+function filterTrendByRange(
+  trend: AnalyticsData["premiumTrend"],
+  range: DateRange
+): AnalyticsData["premiumTrend"] {
+  if (!range.startDate && !range.endDate) return trend;
+  return trend;
+}
+
+export function AnalyticsDashboard({ onDataUpdate, initialDateRange }: AnalyticsDashboardProps) {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange>(
+    initialDateRange ?? { startDate: "", endDate: "" }
+  );
+
+  const handleDateRangeChange = useCallback(
+    (range: DateRange) => {
+      setDateRange(range);
+    },
+    []
+  );
 
   useEffect(() => {
     async function loadData() {
@@ -60,10 +190,16 @@ export function AnalyticsDashboard({ onDataUpdate }: AnalyticsDashboardProps) {
     loadData();
   }, [onDataUpdate]);
 
+  const filteredTrend = useMemo(
+    () => filterTrendByRange(data?.premiumTrend ?? [], dateRange),
+    [data, dateRange]
+  );
+
   const successRate = data ? Math.round((data.claimsProcessed / data.totalClaims) * 100) : 0;
 
   return (
     <div className="analytics-dashboard">
+      <DateRangePicker value={dateRange} onChange={handleDateRangeChange} />
       <div className="analytics-grid">
         {/* Active Policies Widget */}
         <DashboardWidget
@@ -141,7 +277,7 @@ export function AnalyticsDashboard({ onDataUpdate }: AnalyticsDashboardProps) {
             />
             <ChartContainer height="120px">
               <div className="simple-chart">
-                {data?.premiumTrend.map((entry) => (
+                {filteredTrend.map((entry) => (
                   <div key={entry.month} className="chart-bar-wrapper">
                     <div
                       className="chart-bar"
