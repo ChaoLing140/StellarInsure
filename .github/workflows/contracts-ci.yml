@@ -30,5 +30,8 @@ jobs:
       - name: Run contract tests with coverage
         run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info
 
+      - name: Run contract fuzz tests
+        run: cargo test fuzz_ -- --nocapture
+
       - name: Build Wasm contract
         run: cargo build --target wasm32-unknown-unknown --release
