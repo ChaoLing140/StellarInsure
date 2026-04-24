@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.2.0...v1.3.0) (2026-04-24)
+
+
+### Features
+
+* add global rate limiting to gateway ([0995c90](https://github.com/ChaoLing140/StellarInsure/commit/0995c90cf2b353698d9e411a8dd01c2f4270c772))
+
 # [1.2.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.1.0...v1.2.0) (2026-04-24)
 
 
