@@ -17,7 +17,7 @@ describe("HomePage", () => {
     expect(screen.getByRole("main")).toBeInTheDocument();
     expect(
       screen.getByRole("heading", {
-        name: /automated insurance that remains readable/i,
+        name: /parametric insurance: payouts without the paperwork/i,
       }),
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /explore coverage/i })).toBeInTheDocument();

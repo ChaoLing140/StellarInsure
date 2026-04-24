@@ -25,35 +25,40 @@ export default function HomePage() {
       <OnboardingChecklist />
       <section className="hero" id="overview" aria-labelledby="hero-title">
         <div className="hero-grid">
-          <article className="hero-card">
+          <article className="hero-card hero-card--featured">
             <span className="eyebrow">{t("hero.badge")}</span>
-            <h1 id="hero-title" ref={headingRef} tabIndex={-1}>
+            <h1 id="hero-title" ref={headingRef} tabIndex={-1} className="hero-title">
               {t("hero.title")}
             </h1>
-            <p>{t("hero.description")}</p>
+            <p className="hero-description">{t("hero.description")}</p>
 
-            <div className="cta-row">
-              <a className="cta-primary" href="#coverage" data-onboarding="hero-primary-cta">
+            <div className="cta-row hero-cta">
+              <a className="cta-primary cta-primary--large" href="#coverage" data-onboarding="hero-primary-cta">
                 {t("hero.primaryCta")}
               </a>
-              <a className="cta-secondary" href="#workflow">
+              <a className="cta-secondary cta-secondary--large" href="#workflow">
                 {t("hero.secondaryCta")}
               </a>
+            </div>
+
+            <div className="cta-row hero-secondary-actions">
               <button
-                className="cta-secondary"
+                className="cta-text"
                 type="button"
                 onClick={() => setIsCreationModalOpen(true)}
               >
-                Create sample policy
+                <Icon name="spark" size="sm" />
+                <span>Create sample policy</span>
               </button>
-              <Link className="cta-secondary" href="/policies/weather-alpha">
-                View sample policy
+              <Link className="cta-text" href="/policies/weather-alpha">
+                <Icon name="shield" size="sm" />
+                <span>View sample policy</span>
               </Link>
             </div>
           </article>
 
           <aside className="metrics" aria-label={t("hero.metricsLabel")}>
-            <div className="hero-card metric">
+            <div className="hero-card metric metric--highlight">
               <Icon name="clock" size="md" tone="accent" />
               <strong>3m</strong>
               <span>{t("metrics.processing")}</span>
