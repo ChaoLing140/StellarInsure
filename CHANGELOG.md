@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.9.1...v1.10.0) (2026-04-25)
+
+
+### Features
+
+* API error boundaries, offline banner, unsaved guard, reduced-motion ([#125](https://github.com/ChaoLing140/StellarInsure/issues/125) [#126](https://github.com/ChaoLing140/StellarInsure/issues/126) [#122](https://github.com/ChaoLing140/StellarInsure/issues/122) [#139](https://github.com/ChaoLing140/StellarInsure/issues/139)) ([d5d1ad2](https://github.com/ChaoLing140/StellarInsure/commit/d5d1ad29f6ca84efebb552fec8fd74153a0bf7bf))
+
 ## [1.9.1](https://github.com/ChaoLing140/StellarInsure/compare/v1.9.0...v1.9.1) (2026-04-25)
 
 
