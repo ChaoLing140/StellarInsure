@@ -744,13 +744,42 @@ dt,
 }
 
 .tx-table th {
-  padding: 1rem 1.5rem;
+  padding: 0;
   border-bottom: 2px solid var(--card-border);
+}
+
+.sort-button {
+  width: 100%;
+  padding: 1rem 1.5rem;
+  background: transparent;
+  border: none;
   color: var(--text-muted);
   font-size: var(--step--1);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  text-align: left;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.sort-button:hover {
+  color: var(--text);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 .tx-table td {
@@ -3468,4 +3497,30 @@ dt,
   align-items: center;
   justify-content: center;
   margin-bottom: 1.5rem;
+}
+
+/* Popover Component */
+.popover {
+  padding: 0;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--card-border);
+  background: var(--surface);
+  box-shadow: var(--shadow-200);
+  animation: popover-enter 200ms ease both;
+}
+
+.popover-content {
+  padding: 1rem;
+}
+
+@keyframes popover-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

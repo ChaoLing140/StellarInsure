@@ -74,11 +74,24 @@ export function PolicyTable({ policies, isLoading }: PolicyTableProps) {
     };
 
     const SortIcon = ({ field }: { field: SortField }) => {
-        if (sortField !== field) return <Icon name="chevron-up-down" size="sm" tone="muted" />;
+        const getAriaLabel = (f: SortField): string => {
+            const fieldNames: Record<SortField, string> = {
+                id: "Policy ID",
+                premium: "Premium",
+                coverage: "Coverage",
+                expiry: "Expiry",
+                status: "Status",
+            };
+            const fieldName = fieldNames[f];
+            if (sortField !== f) return `Sort by ${fieldName}`;
+            return sortOrder === "asc" ? `${fieldName}, sorted ascending` : `${fieldName}, sorted descending`;
+        };
+
+        if (sortField !== field) return <Icon name="chevron-up-down" size="sm" tone="muted" label={getAriaLabel(field)} />;
         return sortOrder === "asc" ? (
-            <Icon name="chevron-up" size="sm" tone="accent" />
+            <Icon name="chevron-up" size="sm" tone="accent" label={getAriaLabel(field)} />
         ) : (
-            <Icon name="chevron-down" size="sm" tone="accent" />
+            <Icon name="chevron-down" size="sm" tone="accent" label={getAriaLabel(field)} />
         );
     };
 
@@ -93,22 +106,53 @@ export function PolicyTable({ policies, isLoading }: PolicyTableProps) {
     return (
         <div className="tx-table-wrapper">
             <table className="tx-table">
+                <caption className="sr-only">Policy list with sortable columns</caption>
                 <thead>
                     <tr>
-                        <th onClick={() => toggleSort("id")} style={{ cursor: "pointer" }}>
-                            Policy ID <SortIcon field="id" />
+                        <th>
+                            <button
+                                onClick={() => toggleSort("id")}
+                                className="sort-button"
+                                aria-label="Sort by Policy ID, currently sorted ascending"
+                            >
+                                Policy ID <SortIcon field="id" />
+                            </button>
                         </th>
-                        <th onClick={() => toggleSort("premium")} style={{ cursor: "pointer" }}>
-                            Premium <SortIcon field="premium" />
+                        <th>
+                            <button
+                                onClick={() => toggleSort("premium")}
+                                className="sort-button"
+                                aria-label="Sort by Premium"
+                            >
+                                Premium <SortIcon field="premium" />
+                            </button>
                         </th>
-                        <th onClick={() => toggleSort("coverage")} style={{ cursor: "pointer" }}>
-                            Coverage <SortIcon field="coverage" />
+                        <th>
+                            <button
+                                onClick={() => toggleSort("coverage")}
+                                className="sort-button"
+                                aria-label="Sort by Coverage"
+                            >
+                                Coverage <SortIcon field="coverage" />
+                            </button>
                         </th>
-                        <th onClick={() => toggleSort("expiry")} style={{ cursor: "pointer" }}>
-                            Expiry <SortIcon field="expiry" />
+                        <th>
+                            <button
+                                onClick={() => toggleSort("expiry")}
+                                className="sort-button"
+                                aria-label="Sort by Expiry"
+                            >
+                                Expiry <SortIcon field="expiry" />
+                            </button>
                         </th>
-                        <th onClick={() => toggleSort("status")} style={{ cursor: "pointer" }}>
-                            Status <SortIcon field="status" />
+                        <th>
+                            <button
+                                onClick={() => toggleSort("status")}
+                                className="sort-button"
+                                aria-label="Sort by Status"
+                            >
+                                Status <SortIcon field="status" />
+                            </button>
                         </th>
                     </tr>
                 </thead>
