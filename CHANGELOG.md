@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.8.0...v1.9.0) (2026-04-25)
+
+
+### Features
+
+* implement issues [#21](https://github.com/ChaoLing140/StellarInsure/issues/21), [#30](https://github.com/ChaoLing140/StellarInsure/issues/30), [#32](https://github.com/ChaoLing140/StellarInsure/issues/32), [#47](https://github.com/ChaoLing140/StellarInsure/issues/47) ([9bf8602](https://github.com/ChaoLing140/StellarInsure/commit/9bf860204d296fc259d2d4a0b4889626972df105))
+
 # [1.8.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.7.0...v1.8.0) (2026-04-25)
 
 
