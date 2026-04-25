@@ -76,7 +76,7 @@ export function LegalPage({
   }, [sections]);
 
   return (
-    <main id="main-content" className="legal-page">
+    <main id="main-content" tabIndex={-1} className="legal-page">
       {/* ── Page header ──────────────────────────────────────────────────── */}
       <header className="legal-header">
         <div className="section-header">

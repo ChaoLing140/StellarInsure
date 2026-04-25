@@ -43,7 +43,7 @@ export default function SettingsPageClient() {
   }
 
   return (
-    <main id="main-content" className="policy-page">
+    <main id="main-content" tabIndex={-1} className="policy-page">
       <div className="section-header">
         <span className="eyebrow">Settings</span>
         <h1>Account Settings</h1>
