@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.6.0...v1.7.0) (2026-04-25)
+
+
+### Features
+
+* scaffold accessible tooltip component with hover/focus/blur handlers ([52bc8d4](https://github.com/ChaoLing140/StellarInsure/commit/52bc8d42f6b595c636b7adc4c272d58aa47c2f05))
+
 # [1.6.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.5.0...v1.6.0) (2026-04-24)
 
 
