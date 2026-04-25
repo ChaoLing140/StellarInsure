@@ -17,3 +17,19 @@ test("404 page renders gracefully", async ({ page }) => {
   // Next.js returns 404 for unknown routes
   expect(response?.status()).toBe(404);
 });
+
+test("skip link jumps keyboard users to main content", async ({ page }) => {
+  await page.goto("/");
+
+  const skipLink = page.locator("a.skip-link");
+  const main = page.locator("main#main-content");
+
+  await expect(skipLink).toHaveAttribute("href", "#main-content");
+  await expect(main).toBeVisible();
+
+  await skipLink.focus();
+  await skipLink.press("Enter");
+
+  await expect(page).toHaveURL(/#main-content$/);
+  await expect(main).toBeFocused();
+});

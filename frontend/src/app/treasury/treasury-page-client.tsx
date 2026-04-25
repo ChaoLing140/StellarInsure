@@ -32,7 +32,7 @@ export default function TreasuryPageClient() {
     };
 
     return (
-        <main id="main-content" className="treasury-page">
+        <main id="main-content" tabIndex={-1} className="treasury-page">
             <header className="section-header">
                 <span className="eyebrow">Treasury</span>
                 <h1>Protocol Liquidity</h1>

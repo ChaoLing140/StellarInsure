@@ -264,7 +264,7 @@ export default function PolicyDetailPage({
 
   if (isLoading) {
     return (
-      <main id="main-content" className="policy-page" aria-busy="true">
+      <main id="main-content" tabIndex={-1} className="policy-page" aria-busy="true">
         <span className="visually-hidden">Loading policy data, please wait.</span>
         <section className="policy-shell">
           {/* Header */}
@@ -324,7 +324,7 @@ export default function PolicyDetailPage({
 
   if (record === "error") {
     return (
-      <main id="main-content" className="policy-page">
+      <main id="main-content" tabIndex={-1} className="policy-page">
         <section className="policy-shell state-card" role="alert">
           <span className="eyebrow">{t("policyDetail.eyebrow")}</span>
           <span className="state-icon" aria-hidden="true">
@@ -350,7 +350,7 @@ export default function PolicyDetailPage({
 
   if (!currentPolicy) {
     return (
-      <main id="main-content" className="policy-page">
+      <main id="main-content" tabIndex={-1} className="policy-page">
         <section className="policy-shell state-card">
           <span className="eyebrow">Policy Detail</span>
           <span className="state-icon" aria-hidden="true">
@@ -375,7 +375,7 @@ export default function PolicyDetailPage({
   }
 
   return (
-    <main id="main-content" className="policy-page">
+    <main id="main-content" tabIndex={-1} className="policy-page">
       <section className="policy-shell print-shell">
         <header className="section-header policy-header">
           <div>

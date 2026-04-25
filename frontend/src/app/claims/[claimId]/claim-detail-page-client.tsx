@@ -193,7 +193,7 @@ export default function ClaimDetailPageClient({
 
   if (isLoading) {
     return (
-      <main id="main-content" className="claim-detail-page page-shell">
+      <main id="main-content" tabIndex={-1} className="claim-detail-page page-shell">
         <div className="section-header">
           <Skeleton style={{ height: 12, width: 80, marginBottom: "0.5rem" }} />
           <Skeleton
@@ -210,7 +210,7 @@ export default function ClaimDetailPageClient({
 
   if (!record || record === "error") {
     return (
-      <main id="main-content" className="claim-detail-page page-shell">
+      <main id="main-content" tabIndex={-1} className="claim-detail-page page-shell">
         <div className="tx-empty" role="status">
           <span className="tx-empty-icon" aria-hidden="true">
             <Icon name="alert-circle" size="lg" tone="danger" />
@@ -229,7 +229,7 @@ export default function ClaimDetailPageClient({
   }
 
   return (
-    <main id="main-content" className="claim-detail-page page-shell">
+    <main id="main-content" tabIndex={-1} className="claim-detail-page page-shell">
       {/* Header */}
       <div className="section-header motion-panel">
         <span className="eyebrow">Claim Detail</span>

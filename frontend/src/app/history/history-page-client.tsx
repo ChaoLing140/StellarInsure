@@ -154,7 +154,7 @@ export default function TransactionHistoryPage() {
   }
 
   return (
-    <main id="main-content" className="tx-history-page">
+    <main id="main-content" tabIndex={-1} className="tx-history-page">
       <div className="section-header">
         <span className="eyebrow">{t("history.eyebrow")}</span>
         <h1 id="tx-history-title">{t("history.title")}</h1>

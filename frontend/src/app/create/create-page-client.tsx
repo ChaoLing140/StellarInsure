@@ -502,7 +502,7 @@ export default function CreatePolicyPageClient() {
   const isWalletReady = isConnected && walletStatus !== "checking" && walletStatus !== "connecting";
 
   return (
-    <main id="main-content" className="create-page">
+    <main id="main-content" tabIndex={-1} className="create-page">
       <div className="section-header create-header motion-panel">
         <span className="eyebrow">{t("createPolicy.eyebrow")}</span>
         <h1 id="create-title">{t("createPolicy.title")}</h1>

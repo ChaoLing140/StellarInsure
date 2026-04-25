@@ -21,7 +21,7 @@ export default function HomePage() {
   }, [locale]);
 
   return (
-    <main id="main-content">
+    <main id="main-content" tabIndex={-1}>
       <OnboardingChecklist />
       <section className="hero" id="overview" aria-labelledby="hero-title">
         <div className="hero-grid">
