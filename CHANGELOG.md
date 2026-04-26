@@ -1,3 +1,10 @@
+# [1.16.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.15.0...v1.16.0) (2026-04-26)
+
+
+### Features
+
+* **frontend:** add reusable route seo metadata ([e3bdfc4](https://github.com/ChaoLing140/StellarInsure/commit/e3bdfc4a11b7543764a8a3d1107cc9d4e37b8361))
+
 # [1.15.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.14.0...v1.15.0) (2026-04-26)
 
 
