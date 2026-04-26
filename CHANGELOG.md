@@ -1,3 +1,16 @@
+# [1.14.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.13.0...v1.14.0) (2026-04-26)
+
+
+### Bug Fixes
+
+* **ci:** add backend deployment pipeline with migrations and rollback ([2a250ba](https://github.com/ChaoLing140/StellarInsure/commit/2a250ba523df1335da8784c74fb6b3bbc165c3ce))
+* **ci:** add Trivy security scanning workflow ([0c7272e](https://github.com/ChaoLing140/StellarInsure/commit/0c7272eec002e635e14f1fcc98e88f8ed306efd7)), closes [ChaoLing140/StellarInsure#218](https://github.com/ChaoLing140/StellarInsure/issues/218)
+
+
+### Features
+
+* **frontend:** add keyboard shortcuts help modal ([86386ef](https://github.com/ChaoLing140/StellarInsure/commit/86386efcdbf969a05cd75cd6c15e90acb4d58a20)), closes [ChaoLing140/StellarInsure#111](https://github.com/ChaoLing140/StellarInsure/issues/111)
+
 # [1.13.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.12.0...v1.13.0) (2026-04-26)
 
 
