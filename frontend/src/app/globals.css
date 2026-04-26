@@ -2494,6 +2494,278 @@ dt,
   }
 }
 
+/* ── Dark mode component overrides ──────────────────────────────────────── */
+
+[data-theme="dark"] body {
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(74, 176, 197, 0.12),
+      transparent 28%
+    ),
+    linear-gradient(180deg, #0d1622 0%, #131e2e 100%);
+}
+
+[data-theme="dark"] .nav-links a,
+[data-theme="dark"] .locale-switcher button,
+[data-theme="dark"] .tx-page-btn,
+[data-theme="dark"] .tx-select {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .mobile-nav-toggle {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .maintenance-banner {
+  background: linear-gradient(
+    135deg,
+    rgba(19, 30, 46, 0.96),
+    rgba(26, 40, 64, 0.8)
+  );
+}
+
+[data-theme="dark"] .maintenance-banner--active {
+  background: linear-gradient(
+    135deg,
+    rgba(176, 107, 0, 0.15),
+    rgba(179, 38, 30, 0.12)
+  );
+}
+
+[data-theme="dark"] .maintenance-banner__link {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .field__input,
+[data-theme="dark"] .tx-select {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+[data-theme="dark"] .choice {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.09);
+}
+
+[data-theme="dark"] .cp-item,
+[data-theme="dark"] .ks-group {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .state-card--soft {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .tx-detail-panel {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="dark"] .tl-icon {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .oracle-state,
+[data-theme="dark"] .oracle-card {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .oracle-fallback {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .state-icon {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .ob-skeleton {
+  background-color: rgba(255, 255, 255, 0.08);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.06) 20%,
+    rgba(255, 255, 255, 0) 40%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+[data-theme="dark"] .chart-bar-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .ks-group kbd {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="dark"] .tx-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .tx-row--expanded {
+  background: rgba(74, 176, 197, 0.06);
+}
+
+[data-theme="dark"] .bottom-nav {
+  background: rgba(13, 22, 34, 0.96);
+}
+
+[data-theme="dark"] .form-actions {
+  background: linear-gradient(
+    180deg,
+    rgba(13, 22, 34, 0),
+    rgba(13, 22, 34, 0.98) 30%
+  );
+}
+
+/* ── Theme toggle button ─────────────────────────────────────────────────── */
+
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--easing-standard),
+    border-color var(--duration-fast) var(--easing-standard),
+    transform var(--duration-fast) var(--easing-standard);
+}
+
+.theme-toggle:hover {
+  background: var(--surface-wash);
+  transform: rotate(15deg);
+}
+
+[data-theme="dark"] .theme-toggle {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* ── Settings page ───────────────────────────────────────────────────────── */
+
+.settings-container {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border-bottom: 1px solid var(--card-border);
+  padding-bottom: var(--space-3);
+}
+
+.settings-tab {
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  background: none;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: var(--step-0);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast),
+    color var(--duration-fast);
+}
+
+.settings-tab.active,
+.settings-tab[aria-selected="true"] {
+  background: var(--surface-strong);
+  color: var(--surface);
+}
+
+.settings-tab:hover:not(.active):not([aria-selected="true"]) {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.settings-panel {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.settings-section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.settings-section-title {
+  font-size: var(--step-2);
+  margin: 0 0 var(--space-1);
+}
+
+.settings-subsection {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.settings-subsection-title {
+  font-size: var(--step-1);
+  margin: 0;
+}
+
+.settings-subsection-text {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.form-error {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--danger-soft);
+  color: var(--danger-strong);
+  font-size: var(--step-0);
+  font-weight: 600;
+}
+
+.form-success {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--success-soft);
+  color: var(--success-strong);
+  font-size: var(--step-0);
+  font-weight: 600;
+}
+
+/* ── Topbar action icon button (shared) ─────────────────────────────────── */
+
+.topbar-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--easing-standard);
+}
+
+.topbar-action-btn:hover {
+  background: var(--surface-wash);
+}
+
+[data-theme="dark"] .topbar-action-btn {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="dark"] .topbar-action-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
 @media print {
   :root {
     --background: #fff;

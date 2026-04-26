@@ -11,6 +11,7 @@ import { OnboardingFlow } from "@/components/onboarding";
 import { OnboardingTooltips } from "@/components/onboarding-tooltips";
 import { PageTransition } from "@/components/page-transition";
 import { LanguageProvider } from "@/i18n/provider";
+import { ThemeProvider } from "@/components/theme-provider";
 import {
   SITE_URL,
   absoluteUrl,
@@ -75,6 +76,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ErrorBoundary>
+          <ThemeProvider>
           <LanguageProvider>
             <WalletProvider>
               <script defer data-domain="stellarinsure.io" src="https://plausible.io/js/script.js"></script>
@@ -102,6 +104,7 @@ export default function RootLayout({
               </div>
             </WalletProvider>
           </LanguageProvider>
+          </ThemeProvider>
         </ErrorBoundary>
       </body>
     </html>
