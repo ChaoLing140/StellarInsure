@@ -21,6 +21,8 @@ RUN apt-get update \
 
 COPY --from=builder /install /usr/local
 COPY src ./src
+COPY alembic ./alembic
+COPY alembic.ini ./alembic.ini
 
 EXPOSE 8000
 

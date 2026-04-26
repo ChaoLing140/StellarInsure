@@ -1,0 +1,197 @@
+name: Backend Deploy
+
+on:
+  push:
+    branches:
+      - master
+      - "release/**"
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Deployment environment"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+  packages: write
+  deployments: write
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || (startsWith(github.ref_name, 'release/') && 'staging' || 'production') }}
+    env:
+      IMAGE_NAME: ghcr.io/chaoLing140/stellarinsure-backend
+      DEPLOYMENT_WEBHOOK_URL: ${{ secrets.DEPLOYMENT_WEBHOOK_URL }}
+      STAGING_KUBECONFIG: ${{ secrets.STAGING_KUBECONFIG }}
+      PRODUCTION_KUBECONFIG: ${{ secrets.PRODUCTION_KUBECONFIG }}
+      STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Resolve target environment
+        id: target
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ENVIRONMENT_NAME="${{ inputs.environment }}"
+          elif [[ "${{ github.ref_name }}" == release/* ]]; then
+            ENVIRONMENT_NAME="staging"
+          else
+            ENVIRONMENT_NAME="production"
+          fi
+
+          if [ "${ENVIRONMENT_NAME}" = "staging" ]; then
+            K8S_NAMESPACE="staging"
+            KUBECONFIG_DATA="${STAGING_KUBECONFIG}"
+            DATABASE_URL="${STAGING_DATABASE_URL}"
+          else
+            K8S_NAMESPACE="stellarinsure"
+            KUBECONFIG_DATA="${PRODUCTION_KUBECONFIG}"
+            DATABASE_URL="${PRODUCTION_DATABASE_URL}"
+          fi
+
+          echo "ENVIRONMENT_NAME=${ENVIRONMENT_NAME}" >> "$GITHUB_ENV"
+          echo "K8S_NAMESPACE=${K8S_NAMESPACE}" >> "$GITHUB_ENV"
+          echo "KUBECONFIG_DATA=${KUBECONFIG_DATA}" >> "$GITHUB_ENV"
+          echo "DATABASE_URL=${DATABASE_URL}" >> "$GITHUB_ENV"
+          echo "environment_name=${ENVIRONMENT_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Build deployment metadata
+        id: meta
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          IMAGE_TAG="${ENVIRONMENT_NAME}-${SHORT_SHA}"
+          IMAGE_URI="${IMAGE_NAME}:${IMAGE_TAG}"
+          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "image_uri=${IMAGE_URI}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Validate deployment secrets
+        run: |
+          if [ -z "${KUBECONFIG_DATA}" ]; then
+            echo "Missing kubeconfig secret for ${ENVIRONMENT_NAME}."
+            exit 1
+          fi
+
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "Missing DATABASE_URL secret for ${ENVIRONMENT_NAME}."
+            exit 1
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image_uri }}
+            ${{ env.IMAGE_NAME }}:${{ steps.target.outputs.environment_name }}-latest
+
+      - name: Configure kubeconfig
+        run: |
+          mkdir -p "${HOME}/.kube"
+          echo "${KUBECONFIG_DATA}" | base64 --decode > "${HOME}/.kube/config"
+
+      - name: Create deployment
+        uses: actions/github-script@v7
+        id: create_deployment
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: process.env.ENVIRONMENT_NAME,
+              auto_merge: false,
+              required_contexts: [],
+              description: `Deploy backend ${process.env.ENVIRONMENT_NAME}`
+            });
+            core.setOutput("deployment_id", deployment.data.id.toString());
+
+      - name: Mark deployment in progress
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: Number("${{ steps.create_deployment.outputs.deployment_id }}"),
+              state: "in_progress",
+              description: "Backend deployment in progress"
+            });
+
+      - name: Run database migrations
+        run: |
+          kubectl run "backend-migrate-${{ github.run_id }}" \
+            --namespace "${K8S_NAMESPACE}" \
+            --image "${{ steps.meta.outputs.image_uri }}" \
+            --restart=Never \
+            --rm -i \
+            --env="DATABASE_URL=${DATABASE_URL}" \
+            --command -- alembic upgrade head
+
+      - name: Deploy backend image
+        run: |
+          kubectl set image deployment/backend backend="${{ steps.meta.outputs.image_uri }}" --namespace "${K8S_NAMESPACE}"
+          kubectl rollout status deployment/backend --namespace "${K8S_NAMESPACE}" --timeout=180s
+
+      - name: Roll back backend deployment
+        if: failure()
+        run: |
+          kubectl rollout undo deployment/backend --namespace "${K8S_NAMESPACE}"
+          kubectl rollout status deployment/backend --namespace "${K8S_NAMESPACE}" --timeout=180s
+
+      - name: Mark deployment success
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: Number("${{ steps.create_deployment.outputs.deployment_id }}"),
+              state: "success",
+              description: "Backend deployment completed successfully"
+            });
+
+      - name: Mark deployment failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: Number("${{ steps.create_deployment.outputs.deployment_id }}"),
+              state: "failure",
+              description: "Backend deployment failed and rollback attempted"
+            });
+
+      - name: Notify deployment status
+        if: always() && env.DEPLOYMENT_WEBHOOK_URL != ''
+        run: |
+          STATUS="${{ job.status }}"
+          MESSAGE="Backend deploy ${STATUS} for ${ENVIRONMENT_NAME} (${GITHUB_SHA})"
+          curl -X POST "${DEPLOYMENT_WEBHOOK_URL}" \
+            -H "Content-Type: application/json" \
+            -d "{\"text\":\"${MESSAGE}\"}"
