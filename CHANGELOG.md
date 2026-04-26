@@ -1,3 +1,10 @@
+# [1.15.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.14.0...v1.15.0) (2026-04-26)
+
+
+### Features
+
+* resolve multiple backend and contract issues ([80d6697](https://github.com/ChaoLing140/StellarInsure/commit/80d66978af56fce714dc1226aad6f689e6cdc7a2)), closes [#190](https://github.com/ChaoLing140/StellarInsure/issues/190) [#186](https://github.com/ChaoLing140/StellarInsure/issues/186) [#192](https://github.com/ChaoLing140/StellarInsure/issues/192) [#195](https://github.com/ChaoLing140/StellarInsure/issues/195) [#190](https://github.com/ChaoLing140/StellarInsure/issues/190) [#186](https://github.com/ChaoLing140/StellarInsure/issues/186) [#192](https://github.com/ChaoLing140/StellarInsure/issues/192) [#195](https://github.com/ChaoLing140/StellarInsure/issues/195)
+
 # [1.14.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.13.0...v1.14.0) (2026-04-26)
 
 
