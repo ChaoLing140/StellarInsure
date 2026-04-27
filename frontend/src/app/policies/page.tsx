@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageSeo } from "@/components/page-seo";
 import { buildMetadata } from "@/lib/seo";
 
+import { ProtectedPage } from "@/components/protected-page";
 import PoliciesListPageClient from "./policies-list-page-client";
 
 const PAGE_TITLE = "My Policies";
@@ -19,7 +20,9 @@ export default function PoliciesListPage() {
   return (
     <>
       <PageSeo title={PAGE_TITLE} description={PAGE_DESCRIPTION} pathname="/policies" />
-      <PoliciesListPageClient />
+      <ProtectedPage>
+        <PoliciesListPageClient />
+      </ProtectedPage>
     </>
   );
 }

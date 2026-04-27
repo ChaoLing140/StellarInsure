@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageSeo } from "@/components/page-seo";
 import { buildMetadata } from "@/lib/seo";
 
+import { ProtectedPage } from "@/components/protected-page";
 import ClaimDetailPageClient from "./claim-detail-page-client";
 
 const CLAIM_DETAILS: Record<string, { title: string; description: string }> = {
@@ -50,7 +51,9 @@ export default function ClaimDetailPage({
         description={copy.description}
         pathname={`/claims/${params.claimId}`}
       />
-      <ClaimDetailPageClient params={params} />
+      <ProtectedPage>
+        <ClaimDetailPageClient params={params} />
+      </ProtectedPage>
     </>
   );
 }

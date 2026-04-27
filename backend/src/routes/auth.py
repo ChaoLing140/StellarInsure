@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, Depends, Request
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import User
+from ..models import User, Policy, PolicyStatus
 from ..auth import create_tokens, verify_token
 from ..schemas import (
     WalletSignatureRequest,
@@ -222,8 +222,51 @@ async def update_current_user(
     )
 
 
+@router.delete(
+    "/me",
+    response_model=MessageResponse,
+    summary="Delete user account",
+    description="Soft-deletes the authenticated user's account. Personal data is anonymized, active policies are cancelled, and pending claims are rejected. Requires re-authentication via wallet signature.",
+    responses={
+        200: {"description": "Account deleted successfully"},
+        401: {"description": "Not authenticated or invalid signature"},
+    }
+)
+async def delete_account(
+    body: WalletSignatureRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    if body.stellar_address != current_user.stellar_address:
+        raise InvalidSignatureError("Stellar address does not match authenticated user")
+
+    if not verify_stellar_signature(body.stellar_address, body.signature, body.message):
+        raise InvalidSignatureError()
+
+    # Cancel active policies
+    db.query(Policy).filter(
+        Policy.policyholder_id == current_user.id,
+        Policy.status == PolicyStatus.active
+    ).update({"status": PolicyStatus.cancelled})
+
+    # Reject policies with pending claims
+    db.query(Policy).filter(
+        Policy.policyholder_id == current_user.id,
+        Policy.status == PolicyStatus.claim_pending
+    ).update({"status": PolicyStatus.claim_rejected})
+
+    # Anonymize personal data and soft-delete
+    current_user.email = None
+    current_user.stellar_address = f"DELETED_{current_user.id}"
+    current_user.deleted_at = datetime.utcnow()
+
+    db.commit()
+
+    return MessageResponse(message="Account deleted successfully")
+
+
 @router.post(
-    "/logout", 
+    "/logout",
     response_model=MessageResponse,
     summary="Logout user",
     description="Invalidates the current session (client-side only for now, tokens are stateless).",

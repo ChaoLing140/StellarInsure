@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageSeo } from "@/components/page-seo";
 import { buildMetadata } from "@/lib/seo";
 
+import { ProtectedPage } from "@/components/protected-page";
 import PolicyDetailPageClient from "./policy-detail-page-client";
 
 const POLICY_DETAILS: Record<string, { title: string; description: string }> = {
@@ -46,7 +47,9 @@ export default function PolicyDetailPage({ params }: { params: { policyId: strin
         description={copy.description}
         pathname={`/policies/${params.policyId}`}
       />
-      <PolicyDetailPageClient params={params} />
+      <ProtectedPage>
+        <PolicyDetailPageClient params={params} />
+      </ProtectedPage>
     </>
   );
 }

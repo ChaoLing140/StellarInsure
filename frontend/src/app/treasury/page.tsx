@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageSeo } from "@/components/page-seo";
 import { buildMetadata } from "@/lib/seo";
 
+import { ProtectedPage } from "@/components/protected-page";
 import TreasuryPageClient from "./treasury-page-client";
 
 const PAGE_TITLE = "Treasury";
@@ -19,7 +20,9 @@ export default function TreasuryPage() {
   return (
     <>
       <PageSeo title={PAGE_TITLE} description={PAGE_DESCRIPTION} pathname="/treasury" />
-      <TreasuryPageClient />
+      <ProtectedPage>
+        <TreasuryPageClient />
+      </ProtectedPage>
     </>
   );
 }

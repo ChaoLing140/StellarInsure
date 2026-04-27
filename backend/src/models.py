@@ -32,6 +32,7 @@ class User(Base):
     email = Column(String(255), unique=True, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    deleted_at = Column(DateTime, nullable=True, default=None)
 
     policies = relationship("Policy", back_populates="policyholder", cascade="all, delete-orphan")
     claims = relationship("Claim", back_populates="claimant", cascade="all, delete-orphan")

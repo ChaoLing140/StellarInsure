@@ -86,6 +86,99 @@ def test_logout_returns_success_message(client, auth_headers):
     assert response.json()["message"] == "Successfully logged out"
 
 
+def test_delete_account_soft_deletes_and_anonymizes(
+    client, auth_headers, auth_user, wallet_address, auth_message, db_session
+):
+    response = client.delete(
+        "/auth/me",
+        headers=auth_headers,
+        json={
+            "stellar_address": wallet_address,
+            "signature": "signed",
+            "message": auth_message,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["message"] == "Account deleted successfully"
+    db_session.refresh(auth_user)
+    assert auth_user.deleted_at is not None
+    assert auth_user.email is None
+    assert auth_user.stellar_address == f"DELETED_{auth_user.id}"
+
+
+def test_delete_account_cancels_active_policies(
+    client, auth_headers, auth_user, wallet_address, auth_message, policy_factory, db_session
+):
+    from src.models import PolicyStatus
+    policy = policy_factory(auth_user, status=PolicyStatus.active)
+
+    client.delete(
+        "/auth/me",
+        headers=auth_headers,
+        json={
+            "stellar_address": wallet_address,
+            "signature": "signed",
+            "message": auth_message,
+        },
+    )
+
+    db_session.refresh(policy)
+    assert policy.status == PolicyStatus.cancelled
+
+
+def test_delete_account_rejects_pending_claims(
+    client, auth_headers, auth_user, wallet_address, auth_message, policy_factory, db_session
+):
+    from src.models import PolicyStatus
+    policy = policy_factory(auth_user, status=PolicyStatus.claim_pending)
+
+    client.delete(
+        "/auth/me",
+        headers=auth_headers,
+        json={
+            "stellar_address": wallet_address,
+            "signature": "signed",
+            "message": auth_message,
+        },
+    )
+
+    db_session.refresh(policy)
+    assert policy.status == PolicyStatus.claim_rejected
+
+
+def test_delete_account_rejects_address_mismatch(
+    client, auth_headers, second_wallet_address, auth_message
+):
+    response = client.delete(
+        "/auth/me",
+        headers=auth_headers,
+        json={
+            "stellar_address": second_wallet_address,
+            "signature": "signed",
+            "message": auth_message,
+        },
+    )
+    assert response.status_code == 401
+
+
+def test_deleted_user_cannot_authenticate(
+    client, auth_headers, auth_user, wallet_address, auth_message
+):
+    client.delete(
+        "/auth/me",
+        headers=auth_headers,
+        json={
+            "stellar_address": wallet_address,
+            "signature": "signed",
+            "message": auth_message,
+        },
+    )
+
+    response = client.get("/auth/me", headers=auth_headers)
+    assert response.status_code == 401
+
+
 def test_token_helpers_round_trip(wallet_address):
     access_token = create_access_token({"sub": "1", "stellar_address": wallet_address})
     refresh_token = create_refresh_token({"sub": "1", "stellar_address": wallet_address})

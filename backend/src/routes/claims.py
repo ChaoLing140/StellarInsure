@@ -31,8 +31,11 @@ def format_claim_response(claim: Claim) -> ClaimResponse:
     if "/" in proof or "." in proof:
         try:
             proof = storage_service.generate_secure_url(proof)
-        except:
-            pass
+        except Exception as e:
+            logger.warning(
+                "Failed to generate secure URL for claim %s proof: %s",
+                claim.id, e
+            )
             
     return ClaimResponse(
         id=claim.id,
