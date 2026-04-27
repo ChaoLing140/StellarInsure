@@ -15,7 +15,7 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 from .config import get_settings
-from .routes import auth_router, policies_router, claims_router, storage_router, webhooks_router
+from .routes import auth_router, policies_router, claims_router, storage_router, webhooks_router, transactions_router
 from .errors import StellarInsureError
 from .schemas import ErrorResponse
 from .database import engine
@@ -35,6 +35,10 @@ tags_metadata = [
     {
         "name": "claims",
         "description": "Submit and track insurance claims against active policies.",
+    },
+    {
+        "name": "transactions",
+        "description": "View transaction history with filtering and pagination support.",
     },
     {
         "name": "storage",
@@ -132,6 +136,7 @@ app.include_router(policies_router)
 app.include_router(claims_router)
 app.include_router(storage_router)
 app.include_router(webhooks_router)
+app.include_router(transactions_router)
 
 setup_rate_limiting(app)
 

@@ -22,21 +22,39 @@ from ..errors import (
 )
 from ..rate_limiter import limiter
 from ..config import get_settings
+from ..services.stellar_service import stellar_service
 
 settings = get_settings()
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-def verify_stellar_signature(stellar_address: str, signature: str, message: str) -> bool:
+async def verify_stellar_signature(stellar_address: str, signature: str, message: str) -> bool:
+    """
+    Verify Stellar wallet signature using the StellarService.
+    
+    Args:
+        stellar_address: Stellar public key
+        signature: Base64-encoded signature
+        message: Original message that was signed
+    
+    Returns:
+        True if signature is valid, False otherwise
+    """
     if len(stellar_address) != 56 or not stellar_address.startswith('G'):
         return False
     
     if os.getenv("ENVIRONMENT") == "test":
         return True
     
-    expected_message = f"StellarInsure Authentication {datetime.utcnow().strftime('%Y-%m-%d')}"
-    return message == expected_message
+    try:
+        return await stellar_service.verify_stellar_signature(
+            public_key=stellar_address,
+            signature=signature,
+            message=message
+        )
+    except Exception as e:
+        return False
 
 
 def get_or_create_user(db: Session, stellar_address: str) -> User:
@@ -68,7 +86,7 @@ async def login_with_wallet(
     body: WalletSignatureRequest,
     db: Session = Depends(get_db)
 ):
-    if not verify_stellar_signature(body.stellar_address, body.signature, body.message):
+    if not await verify_stellar_signature(body.stellar_address, body.signature, body.message):
         raise InvalidSignatureError()
     
     user = get_or_create_user(db, body.stellar_address)
@@ -108,7 +126,7 @@ async def register_with_wallet(
     if existing_user:
         raise UserAlreadyExistsError("A user with this Stellar address is already registered.")
     
-    if not verify_stellar_signature(body.stellar_address, body.signature, body.message):
+    if not await verify_stellar_signature(body.stellar_address, body.signature, body.message):
         raise InvalidSignatureError()
     
     user = User(stellar_address=body.stellar_address)
@@ -240,7 +258,7 @@ async def delete_account(
     if body.stellar_address != current_user.stellar_address:
         raise InvalidSignatureError("Stellar address does not match authenticated user")
 
-    if not verify_stellar_signature(body.stellar_address, body.signature, body.message):
+    if not await verify_stellar_signature(body.stellar_address, body.signature, body.message):
         raise InvalidSignatureError()
 
     # Cancel active policies
