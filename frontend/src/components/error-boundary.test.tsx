@@ -3,9 +3,8 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ErrorBoundary } from "./error-boundary";
 
-// Mock Sentry
-vi.mock("@sentry/nextjs", () => ({
-  captureException: vi.fn(),
+vi.mock("@/lib/error-logger", () => ({
+  logError: vi.fn(),
 }));
 
 // Component that throws an error for testing
@@ -95,8 +94,8 @@ describe("ErrorBoundary", () => {
     expect(screen.getByText("Working Component")).toBeInTheDocument();
   });
 
-  it("logs errors to Sentry if available", () => {
-    const sentryMock = require("@sentry/nextjs");
+  it("delegates error to the logger adapter", async () => {
+    const { logError } = await import("@/lib/error-logger");
 
     render(
       <ErrorBoundary>
@@ -104,13 +103,9 @@ describe("ErrorBoundary", () => {
       </ErrorBoundary>
     );
 
-    expect(sentryMock.captureException).toHaveBeenCalledWith(
+    expect(logError).toHaveBeenCalledWith(
       expect.any(Error),
-      expect.objectContaining({
-        contexts: expect.objectContaining({
-          react: expect.any(Object),
-        }),
-      })
+      expect.objectContaining({ componentStack: expect.anything() }),
     );
   });
 });

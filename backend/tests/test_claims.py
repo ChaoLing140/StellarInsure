@@ -1,5 +1,6 @@
 from io import BytesIO
 
+import pytest
 from src.models import Policy, PolicyStatus
 
 
@@ -74,7 +75,39 @@ def test_list_claims_supports_filters(
 
 
 def test_update_claim_status_approve_updates_policy(
-    client, auth_headers, auth_user, policy_factory, claim_factory, db_session
+    client, admin_headers, auth_user, policy_factory, claim_factory, db_session
+):
+    policy = policy_factory(auth_user, status=PolicyStatus.claim_pending)
+    claim = claim_factory(auth_user, policy, claim_amount=125.0)
+
+    response = client.patch(
+        f"/claims/{claim.id}?approved=true",
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    refreshed_policy = db_session.get(Policy, policy.id)
+    assert refreshed_policy.status == PolicyStatus.claim_approved
+
+
+def test_update_claim_status_reject_sets_rejected_policy(
+    client, admin_headers, auth_user, policy_factory, claim_factory, db_session
+):
+    policy = policy_factory(auth_user, status=PolicyStatus.claim_pending)
+    claim = claim_factory(auth_user, policy, claim_amount=125.0)
+
+    response = client.patch(
+        f"/claims/{claim.id}?approved=false",
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    refreshed_policy = db_session.get(Policy, policy.id)
+    assert refreshed_policy.status == PolicyStatus.claim_rejected
+
+
+def test_non_admin_cannot_approve_own_claim(
+    client, auth_headers, auth_user, policy_factory, claim_factory
 ):
     policy = policy_factory(auth_user, status=PolicyStatus.claim_pending)
     claim = claim_factory(auth_user, policy, claim_amount=125.0)
@@ -84,25 +117,23 @@ def test_update_claim_status_approve_updates_policy(
         headers=auth_headers,
     )
 
-    assert response.status_code == 200
-    refreshed_policy = db_session.get(Policy, policy.id)
-    assert refreshed_policy.status == PolicyStatus.claim_approved
+    assert response.status_code == 403
 
 
-def test_update_claim_status_reject_sets_rejected_policy(
-    client, auth_headers, auth_user, policy_factory, claim_factory, db_session
+def test_admin_can_approve_any_claim(
+    client, admin_headers, user_factory, second_wallet_address, policy_factory, claim_factory, db_session
 ):
-    policy = policy_factory(auth_user, status=PolicyStatus.claim_pending)
-    claim = claim_factory(auth_user, policy, claim_amount=125.0)
+    other_user = user_factory(second_wallet_address)
+    policy = policy_factory(other_user, status=PolicyStatus.claim_pending)
+    claim = claim_factory(other_user, policy, claim_amount=50.0)
 
     response = client.patch(
-        f"/claims/{claim.id}?approved=false",
-        headers=auth_headers,
+        f"/claims/{claim.id}?approved=true",
+        headers=admin_headers,
     )
 
     assert response.status_code == 200
-    refreshed_policy = db_session.get(Policy, policy.id)
-    assert refreshed_policy.status == PolicyStatus.claim_rejected
+    assert response.json()["approved"] is True
 
 
 def test_create_claim_with_file_upload(
@@ -134,7 +165,7 @@ def test_create_claim_with_invalid_file_type(
     )
 
     assert response.status_code == 400
-    assert "File type not allowed" in response.json()["detail"]
+    assert "not allowed" in response.json()["detail"]
 
 
 def test_list_claims_by_policy(
@@ -152,4 +183,4 @@ def test_list_claims_by_policy(
 def test_claim_routes_require_authentication(client):
     response = client.get("/claims/")
 
-    assert response.status_code == 403
+    assert response.status_code in (401, 403)

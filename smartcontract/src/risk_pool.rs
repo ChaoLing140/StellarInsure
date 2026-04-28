@@ -1,4 +1,4 @@
-use soroban_sdk::{contract, contractimpl, symbol_short, Address, Env};
+use soroban_sdk::{contract, contractimpl, symbol_short, token::TokenClient, Address, Env};
 
 use crate::{
     storage, Error, LiquidityAddedEvent, LiquidityWithdrawnEvent, PoolStats, ProviderPosition,
@@ -18,8 +18,32 @@ impl RiskPool {
         storage::set_risk_pool_admin(&env, &admin);
         storage::set_total_liquidity(&env, 0);
         storage::set_total_yield_distributed(&env, 0);
+        storage::set_reserve_ratio(&env, 2000);
 
         Ok(())
+    }
+
+    pub fn set_reserve_ratio(env: Env, admin: Address, ratio: u32) -> Result<(), Error> {
+        admin.require_auth();
+        let current_admin = storage::get_risk_pool_admin(&env);
+        if admin != current_admin {
+            return Err(Error::Unauthorized);
+        }
+        if ratio > 10000 {
+            return Err(Error::InvalidAmount);
+        }
+        storage::set_reserve_ratio(&env, ratio);
+        Ok(())
+    }
+
+    pub fn get_reserve_ratio(env: Env) -> u32 {
+        storage::get_reserve_ratio(&env)
+    }
+
+    fn calculate_pending_claims_reserve(env: &Env) -> i128 {
+        let total_liquidity = storage::get_total_liquidity(env);
+        let reserve_ratio = storage::get_reserve_ratio(env);
+        total_liquidity * (reserve_ratio as i128) / 10000
     }
 
     pub fn add_liquidity(env: Env, provider: Address, amount: i128) -> Result<(), Error> {
@@ -68,8 +92,16 @@ impl RiskPool {
             return Err(Error::InsufficientLiquidity);
         }
 
+        let total_liquidity = storage::get_total_liquidity(&env);
+        let reserve_required = Self::calculate_pending_claims_reserve(&env);
+        let available_balance = total_liquidity - reserve_required;
+
+        if amount > available_balance {
+            return Err(Error::InsufficientPoolReserve);
+        }
+
         position.contribution -= amount;
-        let new_total = storage::get_total_liquidity(&env) - amount;
+        let new_total = total_liquidity - amount;
         storage::set_total_liquidity(&env, new_total);
 
         if position.contribution == 0 && position.accrued_yield == 0 {
@@ -160,5 +192,28 @@ impl RiskPool {
 
     pub fn get_pool_stats(env: Env) -> PoolStats {
         storage::get_pool_stats(&env)
+    }
+
+    pub fn fund_payout(env: Env, to: Address, amount: i128) -> Result<(), Error> {
+        let admin = storage::get_risk_pool_admin(&env);
+        admin.require_auth();
+
+        if amount <= 0 {
+            return Err(Error::InvalidAmount);
+        }
+
+        let total_liquidity = storage::get_total_liquidity(&env);
+        if amount > total_liquidity {
+            return Err(Error::InsufficientLiquidity);
+        }
+
+        storage::set_total_liquidity(&env, total_liquidity - amount);
+
+        // Perform actual token transfer from RiskPool to 'to'
+        let token_address = storage::get_premium_token(&env).ok_or(Error::NotInitialized)?;
+        let token_client = TokenClient::new(&env, &token_address);
+        token_client.transfer(&env.current_contract_address(), &to, &amount);
+        
+        Ok(())
     }
 }

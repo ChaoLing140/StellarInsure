@@ -60,3 +60,6 @@ coverage/
 # Misc
 *.bak
 *.tmp
+
+# Soroban Test Snapshots
+smartcontract/test_snapshots/

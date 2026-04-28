@@ -1,3 +1,24 @@
+# [1.17.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.16.0...v1.17.0) (2026-04-27)
+
+
+### Features
+
+* implement [#189](https://github.com/ChaoLing140/StellarInsure/issues/189) transactions endpoint, [#187](https://github.com/ChaoLing140/StellarInsure/issues/187) stellar signature verification, [#196](https://github.com/ChaoLing140/StellarInsure/issues/196) multiple claims support, [#188](https://github.com/ChaoLing140/StellarInsure/issues/188) JWT blacklisting ([61fcdd5](https://github.com/ChaoLing140/StellarInsure/commit/61fcdd5a4cbf37a4dbb15d358c0a25f7b9abd41a))
+
+# [1.16.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.15.0...v1.16.0) (2026-04-26)
+
+
+### Features
+
+* **frontend:** add reusable route seo metadata ([e3bdfc4](https://github.com/ChaoLing140/StellarInsure/commit/e3bdfc4a11b7543764a8a3d1107cc9d4e37b8361))
+
+# [1.15.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.14.0...v1.15.0) (2026-04-26)
+
+
+### Features
+
+* resolve multiple backend and contract issues ([80d6697](https://github.com/ChaoLing140/StellarInsure/commit/80d66978af56fce714dc1226aad6f689e6cdc7a2)), closes [#190](https://github.com/ChaoLing140/StellarInsure/issues/190) [#186](https://github.com/ChaoLing140/StellarInsure/issues/186) [#192](https://github.com/ChaoLing140/StellarInsure/issues/192) [#195](https://github.com/ChaoLing140/StellarInsure/issues/195) [#190](https://github.com/ChaoLing140/StellarInsure/issues/190) [#186](https://github.com/ChaoLing140/StellarInsure/issues/186) [#192](https://github.com/ChaoLing140/StellarInsure/issues/192) [#195](https://github.com/ChaoLing140/StellarInsure/issues/195)
+
 # [1.14.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.13.0...v1.14.0) (2026-04-26)
 
 

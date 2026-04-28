@@ -3,6 +3,7 @@ import logging
 import time
 import json
 import uuid
+from sqlalchemy import text
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
@@ -14,7 +15,7 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 
 from .config import get_settings
-from .routes import auth_router, policies_router, claims_router, storage_router, webhooks_router
+from .routes import auth_router, policies_router, claims_router, storage_router, webhooks_router, transactions_router
 from .errors import StellarInsureError
 from .schemas import ErrorResponse
 from .database import engine
@@ -34,6 +35,10 @@ tags_metadata = [
     {
         "name": "claims",
         "description": "Submit and track insurance claims against active policies.",
+    },
+    {
+        "name": "transactions",
+        "description": "View transaction history with filtering and pagination support.",
     },
     {
         "name": "storage",
@@ -131,6 +136,7 @@ app.include_router(policies_router)
 app.include_router(claims_router)
 app.include_router(storage_router)
 app.include_router(webhooks_router)
+app.include_router(transactions_router)
 
 setup_rate_limiting(app)
 
@@ -141,7 +147,7 @@ async def health():
     # Check DB connection
     try:
         with engine.connect() as conn:
-            conn.execute("SELECT 1")
+            conn.execute(text("SELECT 1"))
             health_status["dependencies"]["database"] = "connected"
     except Exception as e:
         health_status["status"] = "unhealthy"

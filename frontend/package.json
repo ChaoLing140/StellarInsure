@@ -12,7 +12,10 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "seed:demo": "npx ts-node --esm scripts/seed-demo.ts",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@stellar/freighter-api": "^1.7.1",
@@ -26,6 +29,11 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.45.0",
+    "@storybook/addon-a11y": "^8.6.12",
+    "@storybook/addon-essentials": "^8.6.12",
+    "@storybook/nextjs": "^8.6.12",
+    "@storybook/react": "^8.6.12",
+    "@storybook/test": "^8.6.12",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
@@ -38,7 +46,9 @@
     "eslint-config-next": "14.0.0",
     "jsdom": "^27.0.1",
     "postcss": "^8",
+    "storybook": "^8.6.12",
     "tailwindcss": "^3.3.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5",
     "vitest": "^3.2.4"
   }

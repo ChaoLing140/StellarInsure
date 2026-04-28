@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, HTTPException, status, Depends, Request
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import User
+from ..models import User, Policy, PolicyStatus
 from ..auth import create_tokens, verify_token
 from ..schemas import (
     WalletSignatureRequest,
@@ -22,21 +22,39 @@ from ..errors import (
 )
 from ..rate_limiter import limiter
 from ..config import get_settings
+from ..services.stellar_service import stellar_service
 
 settings = get_settings()
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-def verify_stellar_signature(stellar_address: str, signature: str, message: str) -> bool:
+async def verify_stellar_signature(stellar_address: str, signature: str, message: str) -> bool:
+    """
+    Verify Stellar wallet signature using the StellarService.
+    
+    Args:
+        stellar_address: Stellar public key
+        signature: Base64-encoded signature
+        message: Original message that was signed
+    
+    Returns:
+        True if signature is valid, False otherwise
+    """
     if len(stellar_address) != 56 or not stellar_address.startswith('G'):
         return False
     
     if os.getenv("ENVIRONMENT") == "test":
         return True
     
-    expected_message = f"StellarInsure Authentication {datetime.utcnow().strftime('%Y-%m-%d')}"
-    return message == expected_message
+    try:
+        return await stellar_service.verify_stellar_signature(
+            public_key=stellar_address,
+            signature=signature,
+            message=message
+        )
+    except Exception as e:
+        return False
 
 
 def get_or_create_user(db: Session, stellar_address: str) -> User:
@@ -68,7 +86,7 @@ async def login_with_wallet(
     body: WalletSignatureRequest,
     db: Session = Depends(get_db)
 ):
-    if not verify_stellar_signature(body.stellar_address, body.signature, body.message):
+    if not await verify_stellar_signature(body.stellar_address, body.signature, body.message):
         raise InvalidSignatureError()
     
     user = get_or_create_user(db, body.stellar_address)
@@ -108,7 +126,7 @@ async def register_with_wallet(
     if existing_user:
         raise UserAlreadyExistsError("A user with this Stellar address is already registered.")
     
-    if not verify_stellar_signature(body.stellar_address, body.signature, body.message):
+    if not await verify_stellar_signature(body.stellar_address, body.signature, body.message):
         raise InvalidSignatureError()
     
     user = User(stellar_address=body.stellar_address)
@@ -222,8 +240,51 @@ async def update_current_user(
     )
 
 
+@router.delete(
+    "/me",
+    response_model=MessageResponse,
+    summary="Delete user account",
+    description="Soft-deletes the authenticated user's account. Personal data is anonymized, active policies are cancelled, and pending claims are rejected. Requires re-authentication via wallet signature.",
+    responses={
+        200: {"description": "Account deleted successfully"},
+        401: {"description": "Not authenticated or invalid signature"},
+    }
+)
+async def delete_account(
+    body: WalletSignatureRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    if body.stellar_address != current_user.stellar_address:
+        raise InvalidSignatureError("Stellar address does not match authenticated user")
+
+    if not await verify_stellar_signature(body.stellar_address, body.signature, body.message):
+        raise InvalidSignatureError()
+
+    # Cancel active policies
+    db.query(Policy).filter(
+        Policy.policyholder_id == current_user.id,
+        Policy.status == PolicyStatus.active
+    ).update({"status": PolicyStatus.cancelled})
+
+    # Reject policies with pending claims
+    db.query(Policy).filter(
+        Policy.policyholder_id == current_user.id,
+        Policy.status == PolicyStatus.claim_pending
+    ).update({"status": PolicyStatus.claim_rejected})
+
+    # Anonymize personal data and soft-delete
+    current_user.email = None
+    current_user.stellar_address = f"DELETED_{current_user.id}"
+    current_user.deleted_at = datetime.utcnow()
+
+    db.commit()
+
+    return MessageResponse(message="Account deleted successfully")
+
+
 @router.post(
-    "/logout", 
+    "/logout",
     response_model=MessageResponse,
     summary="Logout user",
     description="Invalidates the current session (client-side only for now, tokens are stateless).",

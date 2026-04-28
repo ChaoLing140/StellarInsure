@@ -130,5 +130,20 @@ class StorageService:
                 detail="Invalid or malformed token"
             )
 
+    def delete_file(self, file_path: str):
+        """
+        Deletes a file from the upload directory.
+        """
+        if not file_path:
+            return
+            
+        full_path = os.path.join(self.upload_dir, file_path)
+        if os.path.exists(full_path):
+            try:
+                os.remove(full_path)
+            except Exception as e:
+                # Log error but don't fail, file might be already gone or locked
+                print(f"Error deleting file {full_path}: {e}")
+
 # Singleton instance
 storage_service = StorageService()

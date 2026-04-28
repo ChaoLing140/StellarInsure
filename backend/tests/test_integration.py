@@ -34,6 +34,7 @@ from src.models import Claim, Policy, PolicyStatus, PolicyType, User, Webhook
 STELLAR_A = "G" + "A" * 55  # primary test wallet (56 chars)
 STELLAR_B = "G" + "B" * 55  # secondary test wallet (56 chars)
 STELLAR_C = "G" + "C" * 55  # third test wallet (register tests)
+STELLAR_ADMIN = "G" + "D" * 55  # admin wallet (56 chars)
 
 
 def _auth_message() -> str:
@@ -59,24 +60,24 @@ def _login(client, stellar_address: str) -> dict:
     return resp.json()
 
 
-def _ensure_user(db_session, stellar_address: str) -> User:
+def _ensure_user(db_session, stellar_address: str, is_admin: bool = False) -> User:
     """Return an existing user or create one directly in the DB."""
     user = db_session.query(User).filter_by(stellar_address=stellar_address).first()
     if user is None:
-        user = User(stellar_address=stellar_address)
+        user = User(stellar_address=stellar_address, is_admin=is_admin)
         db_session.add(user)
         db_session.commit()
         db_session.refresh(user)
     return user
 
 
-def _token_headers(db_session, stellar_address: str) -> dict:
+def _token_headers(db_session, stellar_address: str, is_admin: bool = False) -> dict:
     """Create a user (if needed) and return Bearer auth headers via JWT directly.
 
     This never hits the HTTP login endpoint, so it doesn't consume any rate
     limit quota.
     """
-    user = _ensure_user(db_session, stellar_address)
+    user = _ensure_user(db_session, stellar_address, is_admin=is_admin)
     token = create_access_token({"sub": str(user.id), "stellar_address": user.stellar_address})
     return {"Authorization": f"Bearer {token}"}
 
@@ -135,6 +136,12 @@ def headers_a(db_session):
 def headers_b(db_session):
     """Auth headers for wallet B — issued via create_access_token (no HTTP call)."""
     return _token_headers(db_session, STELLAR_B)
+
+
+@pytest.fixture()
+def admin_headers(db_session):
+    """Auth headers for an admin user — can approve/reject any claim."""
+    return _token_headers(db_session, STELLAR_ADMIN, is_admin=True)
 
 
 @pytest.fixture()
@@ -406,12 +413,12 @@ class TestClaimFlow:
         assert db_claim.approved is False
 
     def test_approve_claim_transitions_policy_to_claim_approved_in_db(
-        self, client, headers_a, policy_a, db_session
+        self, client, headers_a, admin_headers, policy_a, db_session
     ):
         """Approving a claim must flip policy.status to claim_approved in the DB."""
         claim = _submit_claim(client, headers_a, policy_a["id"], amount=150.0)
         resp = client.patch(
-            f"/claims/{claim['id']}?approved=true", headers=headers_a
+            f"/claims/{claim['id']}?approved=true", headers=admin_headers
         )
         assert resp.status_code == 200
 
@@ -420,23 +427,23 @@ class TestClaimFlow:
         assert policy.status == PolicyStatus.claim_approved
 
     def test_approve_claim_accumulates_claim_amount_in_db(
-        self, client, headers_a, policy_a, db_session
+        self, client, headers_a, admin_headers, policy_a, db_session
     ):
         """Approving a claim must add the claim_amount to policy.claim_amount."""
         claim = _submit_claim(client, headers_a, policy_a["id"], amount=350.0)
-        client.patch(f"/claims/{claim['id']}?approved=true", headers=headers_a)
+        client.patch(f"/claims/{claim['id']}?approved=true", headers=admin_headers)
 
         db_session.expire_all()
         policy = db_session.get(Policy, policy_a["id"])
         assert float(policy.claim_amount) == 350.0
 
     def test_reject_claim_transitions_policy_to_claim_rejected_in_db(
-        self, client, headers_a, policy_a, db_session
+        self, client, headers_a, admin_headers, policy_a, db_session
     ):
         """Rejecting a claim must flip policy.status to claim_rejected in the DB."""
         claim = _submit_claim(client, headers_a, policy_a["id"])
         resp = client.patch(
-            f"/claims/{claim['id']}?approved=false", headers=headers_a
+            f"/claims/{claim['id']}?approved=false", headers=admin_headers
         )
         assert resp.status_code == 200
 
@@ -444,29 +451,27 @@ class TestClaimFlow:
         policy = db_session.get(Policy, policy_a["id"])
         assert policy.status == PolicyStatus.claim_rejected
 
-    def test_full_claim_approval_lifecycle(self, client, headers_a):
+    def test_full_claim_approval_lifecycle(self, client, headers_a, admin_headers):
         """End-to-end: create policy → submit claim → approve → verify API response."""
         policy = _create_policy(client, headers_a, coverage_amount=5_000.0)
         claim = _submit_claim(client, headers_a, policy["id"], amount=1_000.0)
 
-        # Approve the claim.
         resp = client.patch(
-            f"/claims/{claim['id']}?approved=true", headers=headers_a
+            f"/claims/{claim['id']}?approved=true", headers=admin_headers
         )
         assert resp.status_code == 200
         assert resp.json()["approved"] is True
 
-        # Policy status reflected via GET.
         pol_resp = client.get(f"/policies/{policy['id']}", headers=headers_a)
         assert pol_resp.json()["status"] == "claim_approved"
 
-    def test_full_claim_rejection_lifecycle(self, client, headers_a):
+    def test_full_claim_rejection_lifecycle(self, client, headers_a, admin_headers):
         """End-to-end: create policy → submit claim → reject → verify API response."""
         policy = _create_policy(client, headers_a)
         claim = _submit_claim(client, headers_a, policy["id"])
 
         resp = client.patch(
-            f"/claims/{claim['id']}?approved=false", headers=headers_a
+            f"/claims/{claim['id']}?approved=false", headers=admin_headers
         )
         assert resp.status_code == 200
         assert resp.json()["approved"] is False
@@ -638,11 +643,11 @@ class TestDatabaseTransactions:
         assert db_policy.status == PolicyStatus.claim_pending
 
     def test_claim_approval_updates_claim_and_policy_atomically(
-        self, client, headers_a, policy_a, db_session
+        self, client, headers_a, admin_headers, policy_a, db_session
     ):
         """PATCH /claims/{id}?approved=true must update Claim and Policy together."""
         claim = _submit_claim(client, headers_a, policy_a["id"], amount=250.0)
-        client.patch(f"/claims/{claim['id']}?approved=true", headers=headers_a)
+        client.patch(f"/claims/{claim['id']}?approved=true", headers=admin_headers)
 
         db_session.expire_all()
         db_claim = db_session.get(Claim, claim["id"])
@@ -653,11 +658,11 @@ class TestDatabaseTransactions:
         assert float(db_policy.claim_amount) == 250.0
 
     def test_claim_rejection_updates_claim_and_policy_atomically(
-        self, client, headers_a, policy_a, db_session
+        self, client, headers_a, admin_headers, policy_a, db_session
     ):
         """PATCH /claims/{id}?approved=false must update Claim and Policy together."""
         claim = _submit_claim(client, headers_a, policy_a["id"])
-        client.patch(f"/claims/{claim['id']}?approved=false", headers=headers_a)
+        client.patch(f"/claims/{claim['id']}?approved=false", headers=admin_headers)
 
         db_session.expire_all()
         db_claim = db_session.get(Claim, claim["id"])
@@ -748,12 +753,12 @@ class TestMultiUserIsolation:
     def test_user_b_cannot_approve_user_a_claim(
         self, client, headers_a, headers_b, policy_a
     ):
-        """PATCH /claims/{id}?approved=true on User A's claim must fail for User B."""
+        """Non-admin users must not be able to approve any claim (returns 403)."""
         claim = _submit_claim(client, headers_a, policy_a["id"])
         resp = client.patch(
             f"/claims/{claim['id']}?approved=true", headers=headers_b
         )
-        assert resp.status_code == 404
+        assert resp.status_code == 403
 
     def test_each_user_sees_only_their_own_policies_in_list(
         self, client, headers_a, headers_b

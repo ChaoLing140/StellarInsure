@@ -164,7 +164,7 @@ def test_claim_submission_dispatches_webhook(client, auth_headers, db_session, m
     ],
 )
 def test_claim_processing_dispatches_webhook_event_types(
-    client, auth_headers, db_session, monkeypatch, approved, expected_event
+    client, auth_headers, admin_headers, db_session, monkeypatch, approved, expected_event
 ):
     _SuccessClient.calls = []
     monkeypatch.setattr("src.services.webhook_service.httpx.Client", _SuccessClient)
@@ -186,7 +186,7 @@ def test_claim_processing_dispatches_webhook_event_types(
 
     process_resp = client.patch(
         f"/claims/{claim_id}?approved={'true' if approved else 'false'}",
-        headers=auth_headers,
+        headers=admin_headers,
     )
     assert process_resp.status_code == 200, process_resp.text
 

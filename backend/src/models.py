@@ -30,8 +30,10 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     stellar_address = Column(String(56), unique=True, nullable=False, index=True)
     email = Column(String(255), unique=True, nullable=True)
+    is_admin = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    deleted_at = Column(DateTime, nullable=True, default=None)
 
     policies = relationship("Policy", back_populates="policyholder", cascade="all, delete-orphan")
     claims = relationship("Claim", back_populates="claimant", cascade="all, delete-orphan")

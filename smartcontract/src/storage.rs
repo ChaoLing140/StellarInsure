@@ -22,6 +22,11 @@ enum DataKey {
     Version,
     TotalPremium,
     TotalPayouts,
+    RiskPool,
+    // Issue #199 — max policies
+    MaxPolicies,
+    // Issue #202 — reserve ratio
+    ReserveRatio,
 }
 
 pub fn get_version(env: &Env) -> u32 {
@@ -314,6 +319,14 @@ pub fn set_total_payouts(env: &Env, amount: i128) {
         .set(&DataKey::TotalPayouts, &amount);
 }
 
+pub fn get_risk_pool(env: &Env) -> Option<Address> {
+    env.storage().instance().get(&DataKey::RiskPool)
+}
+
+pub fn set_risk_pool(env: &Env, risk_pool: &Address) {
+    env.storage().instance().set(&DataKey::RiskPool, risk_pool);
+}
+
 pub fn get_pool_stats(env: &Env) -> PoolStats {
     let providers = get_registered_provider_vec(env);
 
@@ -322,4 +335,30 @@ pub fn get_pool_stats(env: &Env) -> PoolStats {
         total_yield_distributed: get_total_yield_distributed(env),
         provider_count: providers.len(),
     }
+}
+
+pub fn set_max_policies(env: &Env, max_policies: u64) {
+    env.storage()
+        .instance()
+        .set(&DataKey::MaxPolicies, &max_policies);
+}
+
+pub fn get_max_policies(env: &Env) -> u64 {
+    env.storage()
+        .instance()
+        .get(&DataKey::MaxPolicies)
+        .unwrap_or(1_000_000)
+}
+
+pub fn set_reserve_ratio(env: &Env, ratio: u32) {
+    env.storage()
+        .instance()
+        .set(&DataKey::ReserveRatio, &ratio);
+}
+
+pub fn get_reserve_ratio(env: &Env) -> u32 {
+    env.storage()
+        .instance()
+        .get(&DataKey::ReserveRatio)
+        .unwrap_or(2000)
 }

@@ -1,6 +1,6 @@
 from datetime import datetime as dt
 import logging
-from fastapi import APIRouter, Depends, status, Query, UploadFile, File, Form
+from fastapi import APIRouter, Depends, status, Query, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import os
@@ -12,7 +12,7 @@ from ..schemas import (
     ClaimResponse,
     MessageResponse
 )
-from ..dependencies import get_current_active_user
+from ..dependencies import get_admin_user, get_current_active_user
 from ..errors import (
     PolicyNotFoundError,
     PolicyNotEligibleForClaimError,
@@ -31,8 +31,11 @@ def format_claim_response(claim: Claim) -> ClaimResponse:
     if "/" in proof or "." in proof:
         try:
             proof = storage_service.generate_secure_url(proof)
-        except:
-            pass
+        except Exception as e:
+            logger.warning(
+                "Failed to generate secure URL for claim %s proof: %s",
+                claim.id, e
+            )
             
     return ClaimResponse(
         id=claim.id,
@@ -62,6 +65,7 @@ def format_claim_response(claim: Claim) -> ClaimResponse:
 )
 async def create_claim(
     claim_data: ClaimCreateRequest,
+    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -94,20 +98,18 @@ async def create_claim(
     db.commit()
     db.refresh(claim)
 
-    try:
-        dispatch_webhook_event(
-            db=db,
-            user_id=current_user.id,
-            event_type="claim.created",
-            payload={
-                "claim_id": claim.id,
-                "policy_id": claim.policy_id,
-                "claim_amount": float(claim.claim_amount),
-                "approved": claim.approved,
-            },
-        )
-    except Exception:
-        logger.exception("Failed to dispatch claim.created webhook for claim_id=%s", claim.id)
+    background_tasks.add_task(
+        dispatch_webhook_event,
+        db=db,
+        user_id=current_user.id,
+        event_type="claim.created",
+        payload={
+            "claim_id": claim.id,
+            "policy_id": claim.policy_id,
+            "claim_amount": float(claim.claim_amount),
+            "approved": claim.approved,
+        },
+    )
 
     return format_claim_response(claim)
 
@@ -126,6 +128,7 @@ async def create_claim(
     }
 )
 async def create_claim_with_file(
+    background_tasks: BackgroundTasks,
     policy_id: int = Form(...),
     claim_amount: float = Form(..., gt=0),
     file: UploadFile = File(...),
@@ -164,20 +167,18 @@ async def create_claim_with_file(
     db.commit()
     db.refresh(claim)
 
-    try:
-        dispatch_webhook_event(
-            db=db,
-            user_id=current_user.id,
-            event_type="claim.created",
-            payload={
-                "claim_id": claim.id,
-                "policy_id": claim.policy_id,
-                "claim_amount": float(claim.claim_amount),
-                "approved": claim.approved,
-            },
-        )
-    except Exception:
-        logger.exception("Failed to dispatch claim.created webhook for claim_id=%s", claim.id)
+    background_tasks.add_task(
+        dispatch_webhook_event,
+        db=db,
+        user_id=current_user.id,
+        event_type="claim.created",
+        payload={
+            "claim_id": claim.id,
+            "policy_id": claim.policy_id,
+            "claim_amount": float(claim.claim_amount),
+            "approved": claim.approved,
+        },
+    )
 
     return format_claim_response(claim)
 
@@ -265,26 +266,25 @@ async def list_claims(
 
 
 @router.patch(
-    "/{claim_id}", 
+    "/{claim_id}",
     response_model=ClaimResponse,
-    summary="Update claim status (Mock/Admin)",
-    description="Updates the approval status of a claim. (Note: In a production environment, this would be handled by an Oracle or Admin process).",
+    summary="Update claim status (Admin only)",
+    description="Approves or rejects a claim. Requires admin privileges — policyholders cannot approve their own claims.",
     responses={
         200: {"description": "Claim status updated"},
+        403: {"description": "Admin privileges required"},
         404: {"description": "Claim not found"},
         401: {"description": "Not authenticated"},
     }
 )
 async def update_claim_status(
     claim_id: int,
+    background_tasks: BackgroundTasks,
     approved: bool = Query(..., description="Approval status"),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(get_admin_user),
     db: Session = Depends(get_db)
 ):
-    claim = db.query(Claim).filter(
-        Claim.id == claim_id,
-        Claim.claimant_id == current_user.id
-    ).first()
+    claim = db.query(Claim).filter(Claim.id == claim_id).first()
 
     if claim is None:
         raise ClaimNotFoundError()
@@ -303,21 +303,19 @@ async def update_claim_status(
     db.refresh(claim)
 
     event_type = "claim.approved" if approved else "claim.rejected"
-    try:
-        dispatch_webhook_event(
-            db=db,
-            user_id=current_user.id,
-            event_type=event_type,
-            payload={
-                "claim_id": claim.id,
-                "policy_id": claim.policy_id,
-                "claim_amount": float(claim.claim_amount),
-                "approved": claim.approved,
-                "policy_status": policy.status.value if policy else None,
-            },
-        )
-    except Exception:
-        logger.exception("Failed to dispatch %s webhook for claim_id=%s", event_type, claim.id)
+    background_tasks.add_task(
+        dispatch_webhook_event,
+        db=db,
+        user_id=claim.claimant_id,
+        event_type=event_type,
+        payload={
+            "claim_id": claim.id,
+            "policy_id": claim.policy_id,
+            "claim_amount": float(claim.claim_amount),
+            "approved": claim.approved,
+            "policy_status": policy.status.value if policy else None,
+        },
+    )
 
     return format_claim_response(claim)
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { StructuredData } from "@/components/structured-data";
-import { buildMetadata, webPageStructuredData } from "@/lib/seo";
+import { PageSeo } from "@/components/page-seo";
+import { buildMetadata } from "@/lib/seo";
 
 import PrivacyPageClient from "./privacy-page-client";
 
@@ -18,13 +18,7 @@ export const metadata: Metadata = buildMetadata({
 export default function PrivacyPage() {
   return (
     <>
-      <StructuredData
-        data={webPageStructuredData({
-          title: `${PAGE_TITLE} | StellarInsure`,
-          description: PAGE_DESCRIPTION,
-          pathname: "/legal/privacy",
-        })}
-      />
+      <PageSeo title={PAGE_TITLE} description={PAGE_DESCRIPTION} pathname="/legal/privacy" />
       <PrivacyPageClient />
     </>
   );

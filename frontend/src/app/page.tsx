@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-import { StructuredData } from "@/components/structured-data";
-import { buildMetadata, webPageStructuredData } from "@/lib/seo";
+import { PageSeo } from "@/components/page-seo";
+import { buildMetadata } from "@/lib/seo";
 
 import HomePageClient from "./home-page-client";
 
@@ -18,13 +18,7 @@ export const metadata: Metadata = buildMetadata({
 export default function HomePage() {
   return (
     <>
-      <StructuredData
-        data={webPageStructuredData({
-          title: `${PAGE_TITLE} | StellarInsure`,
-          description: PAGE_DESCRIPTION,
-          pathname: "/",
-        })}
-      />
+      <PageSeo title={PAGE_TITLE} description={PAGE_DESCRIPTION} pathname="/" />
       <HomePageClient />
     </>
   );

@@ -1,9 +1,9 @@
-import React from "react";
 import type { Metadata } from "next";
 
-import { StructuredData } from "@/components/structured-data";
-import { buildMetadata, webPageStructuredData } from "@/lib/seo";
+import { PageSeo } from "@/components/page-seo";
+import { buildMetadata } from "@/lib/seo";
 
+import { ProtectedPage } from "@/components/protected-page";
 import CreatePolicyPageClient from "./create-page-client";
 
 const PAGE_TITLE = "Create Policy";
@@ -19,14 +19,10 @@ export const metadata: Metadata = buildMetadata({
 export default function CreatePolicyPage() {
   return (
     <>
-      <StructuredData
-        data={webPageStructuredData({
-          title: `${PAGE_TITLE} | StellarInsure`,
-          description: PAGE_DESCRIPTION,
-          pathname: "/create",
-        })}
-      />
-      <CreatePolicyPageClient />
+      <PageSeo title={PAGE_TITLE} description={PAGE_DESCRIPTION} pathname="/create" />
+      <ProtectedPage>
+        <CreatePolicyPageClient />
+      </ProtectedPage>
     </>
   );
 }

@@ -88,8 +88,8 @@ def auth_message():
 
 @pytest.fixture()
 def user_factory(db_session):
-    def create_user(stellar_address, email=None):
-        user = User(stellar_address=stellar_address, email=email)
+    def create_user(stellar_address, email=None, is_admin=False):
+        user = User(stellar_address=stellar_address, email=email, is_admin=is_admin)
         db_session.add(user)
         db_session.commit()
         db_session.refresh(user)
@@ -104,9 +104,27 @@ def auth_user(user_factory, wallet_address):
 
 
 @pytest.fixture()
+def admin_user(db_session):
+    from src.models import User
+    user = User(stellar_address="G" + ("C" * 55), is_admin=True)
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+
+@pytest.fixture()
 def auth_headers(auth_user):
     token = create_access_token(
         {"sub": str(auth_user.id), "stellar_address": auth_user.stellar_address}
+    )
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture()
+def admin_headers(admin_user):
+    token = create_access_token(
+        {"sub": str(admin_user.id), "stellar_address": admin_user.stellar_address}
     )
     return {"Authorization": f"Bearer {token}"}
 

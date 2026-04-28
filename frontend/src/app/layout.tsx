@@ -12,6 +12,7 @@ import { OnboardingTooltips } from "@/components/onboarding-tooltips";
 import { PageTransition } from "@/components/page-transition";
 import { LanguageProvider } from "@/i18n/provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from "@/context/auth-context";
 import {
   SITE_URL,
   absoluteUrl,
@@ -78,6 +79,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <ThemeProvider>
           <LanguageProvider>
+            <AuthProvider>
             <WalletProvider>
               <script defer data-domain="stellarinsure.io" src="https://plausible.io/js/script.js"></script>
               <StructuredData data={organizationStructuredData()} />
@@ -103,6 +105,7 @@ export default function RootLayout({
                 </footer>
               </div>
             </WalletProvider>
+            </AuthProvider>
           </LanguageProvider>
           </ThemeProvider>
         </ErrorBoundary>
