@@ -11,6 +11,7 @@ import { OnboardingFlow } from "@/components/onboarding";
 import { OnboardingTooltips } from "@/components/onboarding-tooltips";
 import { PageTransition } from "@/components/page-transition";
 import { LanguageProvider } from "@/i18n/provider";
+import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/context/auth-context";
 import {
   SITE_URL,
@@ -76,6 +77,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <ErrorBoundary>
+          <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
             <WalletProvider>
@@ -105,6 +107,7 @@ export default function RootLayout({
             </WalletProvider>
             </AuthProvider>
           </LanguageProvider>
+          </ThemeProvider>
         </ErrorBoundary>
       </body>
     </html>
