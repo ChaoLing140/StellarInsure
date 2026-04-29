@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.17.0...v1.18.0) (2026-04-29)
+
+
+### Features
+
+* Update Next.js, fix CSS variables, add oracle integration ([0736d07](https://github.com/ChaoLing140/StellarInsure/commit/0736d07694c5e06bd16ac4518366ded486f76e15)), closes [#275](https://github.com/ChaoLing140/StellarInsure/issues/275) [#280](https://github.com/ChaoLing140/StellarInsure/issues/280) [#198](https://github.com/ChaoLing140/StellarInsure/issues/198)
+
 # [1.17.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.16.0...v1.17.0) (2026-04-27)
 
 
