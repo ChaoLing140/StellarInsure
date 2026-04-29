@@ -73,6 +73,7 @@
   /* Semantic aliases */
   --background: var(--color-sand-100);
   --surface: var(--color-sand-50);
+  --surface-2: var(--color-sand-200);
   --surface-strong: var(--color-ink-900);
   --card-border: rgba(16, 37, 66, 0.12);
   --text: var(--color-ink-900);
