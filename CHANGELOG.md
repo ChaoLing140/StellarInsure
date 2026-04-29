@@ -1,3 +1,11 @@
+# [1.20.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.19.0...v1.20.0) (2026-04-29)
+
+
+### Features
+
+* added network swticher ([ec3a2a8](https://github.com/ChaoLing140/StellarInsure/commit/ec3a2a802fc503d5d2827893d26c3b8fe835d19e))
+* added partial claim support to contracts ([761ab03](https://github.com/ChaoLing140/StellarInsure/commit/761ab03cd8ef2f313eeec9dc1bfe5387f763ecb7))
+
 # [1.19.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.18.1...v1.19.0) (2026-04-29)
 
 
