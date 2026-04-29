@@ -1,3 +1,10 @@
+## [1.21.1](https://github.com/ChaoLing140/StellarInsure/compare/v1.21.0...v1.21.1) (2026-04-29)
+
+
+### Bug Fixes
+
+* standardize error handling, add icon aria-hidden, document contract state vars ([1dd3967](https://github.com/ChaoLing140/StellarInsure/commit/1dd39678b9396758b665ba4952754b09d8910ac1)), closes [#277](https://github.com/ChaoLing140/StellarInsure/issues/277) [#276](https://github.com/ChaoLing140/StellarInsure/issues/276) [#279](https://github.com/ChaoLing140/StellarInsure/issues/279) [#276](https://github.com/ChaoLing140/StellarInsure/issues/276) [#277](https://github.com/ChaoLing140/StellarInsure/issues/277) [#279](https://github.com/ChaoLing140/StellarInsure/issues/279)
+
 # [1.21.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.20.0...v1.21.0) (2026-04-29)
 
 
