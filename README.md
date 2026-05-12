@@ -37,7 +37,7 @@ StellarInsure is a **parametric insurance protocol** where:
 
 ---
 
-## How It Works -
+## How It Works
 
 ### Parametric Insurance Model
 
@@ -201,7 +201,7 @@ Payout: Automatic when price oracle confirms
 git clone https://github.com/faithorji/StellarInsure.git
 cd StellarInsure
 
-# Setup Smart Contracts
+# Set up smart contracts
 cd smartcontract
 cargo build --release --target wasm32-unknown-unknown
 
@@ -210,15 +210,16 @@ soroban contract deploy \
   --wasm target/wasm32-unknown-unknown/release/stellarinsure.wasm \
   --network testnet
 
-# Setup Frontend
+# Set up frontend
 cd ../frontend
 npm install
 npm run dev
 
-# Setup Backend
+# Set up backend
 cd ../backend
 pip install -r requirements.txt
 python src/main.py
+```
 
 ### Using Docker (Recommended for Development)
 
@@ -233,8 +234,6 @@ This will start:
 - Frontend on `http://localhost:3000`
 - Backend on `http://localhost:8000`
 - PostgreSQL & Redis locally for backend connections
-
-```
 
 ---
 
