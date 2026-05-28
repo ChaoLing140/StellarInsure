@@ -262,6 +262,8 @@ export default function PoliciesListPageClient() {
   const [endDate, setEndDate] = useState<string>(INITIAL_FILTERS.endDate);
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 6;
 
   useEffect(() => {
     const stored = localStorage.getItem('policy-view-mode');
@@ -417,6 +419,13 @@ export default function PoliciesListPageClient() {
       setEndDate(INITIAL_FILTERS.endDate);
     });
   }
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, typeFilter, sortBy, minCoverage, maxCoverage, startDate, endDate]);
+
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+  const paged = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <main id="main-content" tabIndex={-1} className="policy-page">
@@ -620,28 +629,102 @@ export default function PoliciesListPageClient() {
           </Link>
         </div>
       ) : viewMode === 'grid' ? (
-        <div
-          className={`policy-grid motion-panel ${isFiltering ? 'policy-grid--loading' : ''}`}
-        >
-          {sorted.map((entry) => (
-            <PolicyCard
-              key={entry.data.id}
-              policy={entry.data}
-              optimisticStatus={entry.optimisticStatus}
-              onDismissError={
-                entry.optimisticStatus === 'error'
-                  ? () => removeItem(entry.data.id)
-                  : undefined
-              }
-            />
-          ))}
-        </div>
+        <>
+          <div
+            className={`policy-grid motion-panel ${isFiltering ? 'policy-grid--loading' : ''}`}
+          >
+            {paged.map((entry) => (
+              <PolicyCard
+                key={entry.data.id}
+                policy={entry.data}
+                optimisticStatus={entry.optimisticStatus}
+                onDismissError={
+                  entry.optimisticStatus === 'error'
+                    ? () => removeItem(entry.data.id)
+                    : undefined
+                }
+              />
+            ))}
+          </div>
+          {totalPages > 1 && (
+            <nav className="tx-pagination" aria-label="Policy pages">
+              <p className="sr-only" aria-live="polite" aria-atomic="true">
+                Page {currentPage} of {totalPages}
+              </p>
+              <button
+                className="tx-page-btn"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+                aria-label="Previous page"
+              >
+                ‹
+              </button>
+              <span className="tx-page-numbers">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    className={`tx-page-btn${currentPage === page ? ' tx-page-btn--active' : ''}`}
+                    onClick={() => setCurrentPage(page)}
+                    aria-current={currentPage === page ? 'page' : undefined}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </span>
+              <button
+                className="tx-page-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+                aria-label="Next page"
+              >
+                ›
+              </button>
+            </nav>
+          )}
+        </>
       ) : (
-        <div
-          className={`policy-table-view motion-panel ${isFiltering ? 'policy-grid--loading' : ''}`}
-        >
-          <PolicyTable policies={sorted.map((e) => e.data) as any} />
-        </div>
+        <>
+          <div
+            className={`policy-table-view motion-panel ${isFiltering ? 'policy-grid--loading' : ''}`}
+          >
+            <PolicyTable policies={paged.map((e) => e.data) as any} />
+          </div>
+          {totalPages > 1 && (
+            <nav className="tx-pagination" aria-label="Policy pages">
+              <p className="sr-only" aria-live="polite" aria-atomic="true">
+                Page {currentPage} of {totalPages}
+              </p>
+              <button
+                className="tx-page-btn"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+                aria-label="Previous page"
+              >
+                ‹
+              </button>
+              <span className="tx-page-numbers">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    className={`tx-page-btn${currentPage === page ? ' tx-page-btn--active' : ''}`}
+                    onClick={() => setCurrentPage(page)}
+                    aria-current={currentPage === page ? 'page' : undefined}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </span>
+              <button
+                className="tx-page-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+                aria-label="Next page"
+              >
+                ›
+              </button>
+            </nav>
+          )}
+        </>
       )}
     </main>
   );

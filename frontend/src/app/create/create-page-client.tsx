@@ -327,6 +327,8 @@ export default function CreatePolicyPageClient() {
   });
   const [txSteps, setTxSteps] = useState<TimelineStep[]>(DEFAULT_TX_STEPS);
   const [coverageTouched, setCoverageTouched] = useState(false);
+  const [premiumTouched, setPremiumTouched] = useState(false);
+  const [durationTouched, setDurationTouched] = useState(false);
   const [oracleState, setOracleState] = useState<OracleProviderState>("loading");
   const [oracleProviders, setOracleProviders] = useState<OracleProvider[]>([]);
   const [oracleReloadCounter, setOracleReloadCounter] = useState(0);
@@ -386,13 +388,15 @@ export default function CreatePolicyPageClient() {
 
   function handleConfigureNext() {
     setCoverageTouched(true);
+    setPremiumTouched(true);
+    setDurationTouched(true);
 
     const errors: ValidationError[] = [];
     if (coverageError) errors.push({ id: "coverage-input", field: "Coverage", message: coverageError });
     if (draft.triggerCondition.trim() === "")
       errors.push({ id: "trigger-input", field: "Trigger", message: "Trigger condition is required." });
-    if (draft.premium.trim() === "") errors.push({ id: "premium-input", field: "Premium", message: "Premium is required." });
-    if (draft.duration.trim() === "") errors.push({ id: "duration-input", field: "Duration", message: "Duration is required." });
+    if (premiumError) errors.push({ id: "premium-input", field: "Premium", message: premiumError });
+    if (durationError) errors.push({ id: "duration-input", field: "Duration", message: durationError });
     if (oracleState !== "ready" || draft.oracleProvider.trim() === "")
       errors.push({ id: "oracle-selector", field: "Oracle", message: "Please select an oracle provider." });
 
@@ -489,6 +493,20 @@ export default function CreatePolicyPageClient() {
           ? `Coverage amount cannot exceed ${formatAssetAmount(MAX_COVERAGE_AMOUNT)} XLM.`
           : undefined;
 
+  const premiumError =
+    draft.premium.trim() === ""
+      ? "Premium is required."
+      : isNaN(Number(draft.premium)) || Number(draft.premium) <= 0
+        ? "Enter a positive numeric premium value."
+        : undefined;
+
+  const durationError =
+    draft.duration.trim() === ""
+      ? "Duration is required."
+      : isNaN(Number(draft.duration)) || Number(draft.duration) <= 0
+        ? "Enter a positive number of days."
+        : undefined;
+
   const selectedOracle = useMemo(
     () => oracleProviders.find((provider) => provider.id === draft.oracleProvider),
     [draft.oracleProvider, oracleProviders],
@@ -496,9 +514,9 @@ export default function CreatePolicyPageClient() {
 
   const isConfigValid =
     coverageError === undefined &&
+    premiumError === undefined &&
+    durationError === undefined &&
     draft.triggerCondition.trim() !== "" &&
-    draft.premium.trim() !== "" &&
-    draft.duration.trim() !== "" &&
     oracleState === "ready" &&
     draft.oracleProvider.trim() !== "";
 
@@ -566,9 +584,15 @@ export default function CreatePolicyPageClient() {
                 step="0.01"
                 placeholder="e.g. 200"
                 value={draft.premium}
+                aria-invalid={Boolean(premiumError) && premiumTouched}
+                aria-describedby={premiumError && premiumTouched ? "premium-error" : "premium-hint"}
                 onChange={(event) => updateDraft("premium", event.target.value)}
+                onBlur={() => setPremiumTouched(true)}
               />
-              <span className="field__hint">{t("createPolicy.configSection.premiumHint")}</span>
+              <span id="premium-hint" className="field__hint">{t("createPolicy.configSection.premiumHint")}</span>
+              {premiumError && premiumTouched ? (
+                <span id="premium-error" className="field__error">{premiumError}</span>
+              ) : null}
 
               <div style={{ marginTop: "var(--space-4)" }}>
                 <PremiumEstimate
@@ -601,13 +625,13 @@ export default function CreatePolicyPageClient() {
 
             <label className="field">
               <span className="field__label">{t("createPolicy.configSection.durationLabel")}</span>
-              <div style={{ display: "flex", gap: "var(--space-2)", marginBottom: "var(--space-2)", flexWrap: "wrap" }}>
+              <div className="duration-presets">
                 {[30, 90, 180, 365].map((days) => (
                   <button
                     key={days}
                     type="button"
-                    className="cta-secondary"
-                    style={draft.duration === String(days) ? { borderColor: "var(--color-primary)", background: "var(--color-surface)", color: "var(--color-primary)" } : {}}
+                    className={`cta-secondary${draft.duration === String(days) ? " duration-preset-btn--selected" : ""}`}
+                    aria-pressed={draft.duration === String(days)}
                     onClick={() => updateDraft("duration", String(days))}
                   >
                     {days} Days
@@ -621,9 +645,15 @@ export default function CreatePolicyPageClient() {
                 min="1"
                 placeholder="e.g. custom duration days"
                 value={draft.duration}
+                aria-invalid={Boolean(durationError) && durationTouched}
+                aria-describedby={durationError && durationTouched ? "duration-error" : "duration-hint"}
                 onChange={(event) => updateDraft("duration", event.target.value)}
+                onBlur={() => setDurationTouched(true)}
               />
-              <span className="field__hint">{t("createPolicy.configSection.durationHint")}</span>
+              <span id="duration-hint" className="field__hint">{t("createPolicy.configSection.durationHint")}</span>
+              {durationError && durationTouched ? (
+                <span id="duration-error" className="field__error">{durationError}</span>
+              ) : null}
             </label>
           </div>
 
