@@ -333,6 +333,7 @@ export default function CreatePolicyPageClient() {
   const [oracleProviders, setOracleProviders] = useState<OracleProvider[]>([]);
   const [oracleReloadCounter, setOracleReloadCounter] = useState(0);
   const [receipt, setReceipt] = useState<ReceiptData | null>(null);
+  const [submissionError, setSubmissionError] = useState<string | null>(null);
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimationError, setEstimationError] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
@@ -421,6 +422,7 @@ export default function CreatePolicyPageClient() {
       return;
     }
 
+    setSubmissionError(null);
     const activeOracle = oracleProviders.find((provider) => provider.id === draft.oracleProvider);
     const coverageForReceipt =
       parsedCoverageAmount !== null ? formatAssetAmount(parsedCoverageAmount) : draft.coverageAmount;
@@ -442,6 +444,8 @@ export default function CreatePolicyPageClient() {
     updatedSteps[0] = { ...updatedSteps[0], status: "active" };
     setTxSteps(updatedSteps);
 
+    let signingProgressTimer: number | undefined;
+
     try {
       // Dummy transaction (in a real app, you'd build a proper Soroban transaction)
       const dummyTx = "AAAAAgAAAAA6V+GyS5x1u+WCzONvDjqnqF6nWCAf3g4pY9qpArIB";
@@ -450,7 +454,7 @@ export default function CreatePolicyPageClient() {
         network: "TESTNET",
       });
 
-      setTimeout(() => {
+      signingProgressTimer = window.setTimeout(() => {
         const next = [...updatedSteps];
         next[0] = { ...next[0], status: "completed" };
         next[1] = { ...next[1], status: "active" };
@@ -458,7 +462,10 @@ export default function CreatePolicyPageClient() {
       }, 1200);
 
       // Await Freighter signature
-      const signedTx = await sigPromise;
+      await sigPromise;
+      if (signingProgressTimer !== undefined) {
+        window.clearTimeout(signingProgressTimer);
+      }
 
       const next = [...updatedSteps];
       next[0] = { ...next[0], status: "completed" };
@@ -474,13 +481,28 @@ export default function CreatePolicyPageClient() {
         clearDraft();
       }, 2000);
     } catch (error) {
+      if (signingProgressTimer !== undefined) {
+        window.clearTimeout(signingProgressTimer);
+      }
       const errorSteps = [...updatedSteps];
       errorSteps[0] = { ...errorSteps[0], status: "failed" };
       setTxSteps(errorSteps);
+      setSubmissionError(
+        error instanceof Error && error.message.trim()
+          ? error.message
+          : "Wallet signing failed. Review the policy details or retry the signature request.",
+      );
       logError(error instanceof Error ? error : new Error(String(error)), {
         tags: { component: "CreatePolicyPageClient", action: "simulateSubmit" }
       });
     }
+  }
+
+  function handleReturnToReview() {
+    setSubmissionError(null);
+    setReceipt(null);
+    setTxSteps(DEFAULT_TX_STEPS);
+    setStep(2);
   }
 
   const parsedCoverageAmount = parseAmountInput(draft.coverageAmount);
@@ -786,6 +808,27 @@ export default function CreatePolicyPageClient() {
                 setReceipt(null);
               }}
             />
+          ) : null}
+
+          {submissionError ? (
+            <div className="state-card motion-panel" role="alert" aria-live="assertive">
+              <span className="state-icon" aria-hidden="true">
+                <Icon name="alert-triangle" size="lg" tone="danger" />
+              </span>
+              <h3>Policy submission needs attention</h3>
+              <p className="state-copy">
+                We could not complete the wallet signature, so the policy was not submitted. Your draft is still saved.
+              </p>
+              <p className="form-status">{submissionError}</p>
+              <div className="inline-actions">
+                <button className="cta-primary" type="button" onClick={simulateSubmit} disabled={!isWalletReady}>
+                  Retry signature
+                </button>
+                <button className="cta-secondary" type="button" onClick={handleReturnToReview}>
+                  Back to review
+                </button>
+              </div>
+            </div>
           ) : null}
         </section>
       )}
