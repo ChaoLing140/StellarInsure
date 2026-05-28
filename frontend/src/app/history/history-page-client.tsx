@@ -107,6 +107,67 @@ function TypeBadge({ type }: { type: string }) {
   );
 }
 
+function TransactionTableSkeleton() {
+  const { t } = useAppTranslation();
+
+  return (
+    <table className="tx-table">
+      <thead>
+        <tr>
+          <th scope="col">{t('history.table.date')}</th>
+          <th scope="col">{t('history.table.type')}</th>
+          <th scope="col">{t('history.table.amount')}</th>
+          <th scope="col">{t('history.table.status')}</th>
+          <th scope="col">{t('history.table.hash')}</th>
+          <th scope="col">{t('history.table.details')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <tr key={`sk-row-${i}`} className="tx-row">
+            <td>
+              <Skeleton style={{ height: '14px', width: '120px' }} />
+            </td>
+            <td>
+              <Skeleton
+                style={{
+                  height: '22px',
+                  width: '64px',
+                  borderRadius: '20px',
+                }}
+              />
+            </td>
+            <td>
+              <Skeleton style={{ height: '14px', width: '60px' }} />
+            </td>
+            <td>
+              <Skeleton
+                style={{
+                  height: '22px',
+                  width: '80px',
+                  borderRadius: '20px',
+                }}
+              />
+            </td>
+            <td>
+              <Skeleton style={{ height: '14px', width: '100px' }} />
+            </td>
+            <td>
+              <Skeleton
+                style={{
+                  height: '24px',
+                  width: '28px',
+                  borderRadius: '4px',
+                }}
+              />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
 export default function TransactionHistoryPage() {
   const { t } = useAppTranslation();
   const [typeFilter, setTypeFilter] = useState<TxType>('all');
@@ -254,60 +315,7 @@ export default function TransactionHistoryPage() {
           <span className="visually-hidden">
             Loading transactions, please wait.
           </span>
-          <table className="tx-table">
-            <thead>
-              <tr>
-                <th scope="col">{t('history.table.date')}</th>
-                <th scope="col">{t('history.table.type')}</th>
-                <th scope="col">{t('history.table.amount')}</th>
-                <th scope="col">{t('history.table.status')}</th>
-                <th scope="col">{t('history.table.hash')}</th>
-                <th scope="col">{t('history.table.details')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <tr key={`sk-row-${i}`} className="tx-row">
-                  <td>
-                    <Skeleton style={{ height: '14px', width: '120px' }} />
-                  </td>
-                  <td>
-                    <Skeleton
-                      style={{
-                        height: '22px',
-                        width: '64px',
-                        borderRadius: '20px',
-                      }}
-                    />
-                  </td>
-                  <td>
-                    <Skeleton style={{ height: '14px', width: '60px' }} />
-                  </td>
-                  <td>
-                    <Skeleton
-                      style={{
-                        height: '22px',
-                        width: '80px',
-                        borderRadius: '20px',
-                      }}
-                    />
-                  </td>
-                  <td>
-                    <Skeleton style={{ height: '14px', width: '100px' }} />
-                  </td>
-                  <td>
-                    <Skeleton
-                      style={{
-                        height: '24px',
-                        width: '28px',
-                        borderRadius: '4px',
-                      }}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <TransactionTableSkeleton />
         </div>
       ) : paginated.length === 0 ? (
         <div className="tx-empty" role="status">
@@ -350,60 +358,7 @@ export default function TransactionHistoryPage() {
           aria-busy={isFiltering}
         >
           {isFiltering ? (
-            <table className="tx-table">
-              <thead>
-                <tr>
-                  <th scope="col">{t('history.table.date')}</th>
-                  <th scope="col">{t('history.table.type')}</th>
-                  <th scope="col">{t('history.table.amount')}</th>
-                  <th scope="col">{t('history.table.status')}</th>
-                  <th scope="col">{t('history.table.hash')}</th>
-                  <th scope="col">{t('history.table.details')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <tr key={`filter-sk-${i}`} className="tx-row">
-                    <td>
-                      <Skeleton style={{ height: '14px', width: '120px' }} />
-                    </td>
-                    <td>
-                      <Skeleton
-                        style={{
-                          height: '22px',
-                          width: '64px',
-                          borderRadius: '20px',
-                        }}
-                      />
-                    </td>
-                    <td>
-                      <Skeleton style={{ height: '14px', width: '60px' }} />
-                    </td>
-                    <td>
-                      <Skeleton
-                        style={{
-                          height: '22px',
-                          width: '80px',
-                          borderRadius: '20px',
-                        }}
-                      />
-                    </td>
-                    <td>
-                      <Skeleton style={{ height: '14px', width: '100px' }} />
-                    </td>
-                    <td>
-                      <Skeleton
-                        style={{
-                          height: '24px',
-                          width: '28px',
-                          borderRadius: '4px',
-                        }}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <TransactionTableSkeleton />
           ) : (
             <table className="tx-table" aria-labelledby="tx-history-title">
               <thead>
