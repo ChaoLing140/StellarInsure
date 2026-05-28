@@ -616,6 +616,7 @@ export default function CreatePolicyPageClient() {
             <div className="field field--full" id="trigger-input">
               <span className="field__label">{t("createPolicy.configSection.triggerLabel")}</span>
               <TriggerConditionBuilder
+                value={draft.triggerCondition}
                 onChange={(val) => updateDraft("triggerCondition", val)}
               />
               <span className="field__hint">

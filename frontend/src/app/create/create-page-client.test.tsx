@@ -2,6 +2,7 @@ import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { LanguageProvider } from "@/i18n/provider";
 import CreatePolicyPageClient from "./create-page-client";
 
 vi.mock("@/components/wallet-provider", () => ({
@@ -18,12 +19,19 @@ vi.mock("@stellar/freighter-api", () => ({
 }));
 
 vi.mock("@/components/trigger-condition-builder", () => ({
-  TriggerConditionBuilder: ({ onChange }: { onChange: (value: string) => void }) => (
+  TriggerConditionBuilder: ({
+    value = "",
+    onChange,
+  }: {
+    value?: string;
+    onChange: (value: string) => void;
+  }) => (
     <input
       aria-label="Trigger mock input"
       onChange={(event) => onChange(event.target.value)}
       placeholder="Trigger mock input"
       type="text"
+      value={value}
     />
   ),
 }));
@@ -53,27 +61,63 @@ vi.mock("@/components/oracle-source-selector", () => ({
     ),
 }));
 
+function makeTestStorage() {
+  let store: Record<string, string> = {};
+
+  return {
+    clear: vi.fn(() => {
+      store = {};
+    }),
+    getItem: vi.fn((key: string) => store[key] ?? null),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value;
+    }),
+  };
+}
+
+const testStorage = makeTestStorage();
+
+function renderCreatePolicyPage() {
+  return render(
+    <LanguageProvider>
+      <CreatePolicyPageClient />
+    </LanguageProvider>,
+  );
+}
+
 describe("CreatePolicyPageClient", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     signTransactionMock.mockResolvedValue({ signedTxXdr: "signed-xdr" });
+    testStorage.clear();
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      value: testStorage,
+    });
+    Object.defineProperty(globalThis, "localStorage", {
+      configurable: true,
+      value: testStorage,
+    });
     window.scrollTo = vi.fn();
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    localStorage.clear();
+    testStorage.clear();
   });
 
   it("moves from policy type selection into configure step", () => {
-    render(<CreatePolicyPageClient />);
+    renderCreatePolicyPage();
     fireEvent.click(screen.getByRole("radio", { name: /weather protection/i }));
 
     expect(screen.getByRole("heading", { name: /configure your policy/i })).toBeInTheDocument();
   });
 
   it("applies form validation for invalid coverage values", () => {
-    render(<CreatePolicyPageClient />);
+    renderCreatePolicyPage();
     fireEvent.click(screen.getByRole("radio", { name: /weather protection/i }));
 
     const coverageInput = screen.getByLabelText(/coverage amount/i);
@@ -84,8 +128,37 @@ describe("CreatePolicyPageClient", () => {
     expect(screen.getByRole("button", { name: /continue to review/i })).toBeDisabled();
   });
 
+  it("restores trigger condition into the builder and keeps autosave working", () => {
+    testStorage.setItem(
+      "stellarinsure-policy-draft",
+      JSON.stringify({
+        policyType: "weather",
+        coverageAmount: "",
+        premium: "",
+        triggerCondition: "rainfall > 50",
+        duration: "",
+        oracleProvider: "",
+      }),
+    );
+    renderCreatePolicyPage();
+
+    expect(screen.getByRole("heading", { name: /configure your policy/i })).toBeInTheDocument();
+
+    const triggerInput = screen.getByLabelText(/trigger mock input/i);
+    expect(triggerInput).toHaveValue("rainfall > 50");
+
+    fireEvent.change(triggerInput, { target: { value: "rainfall > 60" } });
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(JSON.parse(testStorage.getItem("stellarinsure-policy-draft") ?? "{}")).toMatchObject({
+      triggerCondition: "rainfall > 60",
+    });
+  });
+
   it("submits successfully with mocked wallet signature", async () => {
-    localStorage.setItem(
+    testStorage.setItem(
       "stellarinsure-policy-draft",
       JSON.stringify({
         policyType: "weather",
@@ -96,7 +169,7 @@ describe("CreatePolicyPageClient", () => {
         oracleProvider: "weatherlink-prime",
       }),
     );
-    render(<CreatePolicyPageClient />);
+    renderCreatePolicyPage();
 
     expect(screen.getByRole("heading", { name: /review your policy/i })).toBeInTheDocument();
 

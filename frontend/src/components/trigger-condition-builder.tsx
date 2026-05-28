@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icon";
 
 export type Operator = ">" | "<" | "=" | ">=" | "<=";
@@ -13,6 +13,7 @@ export interface ConditionRule {
 
 interface TriggerConditionBuilderProps {
   initialRules?: ConditionRule[];
+  value?: string;
   onChange: (conditionString: string) => void;
   availableFields?: { id: string; label: string }[];
 }
@@ -24,14 +25,55 @@ const DEFAULT_FIELDS = [
   { id: "delay_minutes", label: "Delay (minutes)" },
 ];
 
+function createDefaultRule(availableFields: { id: string; label: string }[]): ConditionRule {
+  return { field: availableFields[0]?.id ?? "", operator: ">", value: "" };
+}
+
+function serializeRules(currentRules: ConditionRule[]) {
+  return currentRules
+    .filter((r) => r.value.trim() !== "")
+    .map((r) => `${r.field} ${r.operator} ${r.value}`)
+    .join(" AND ");
+}
+
+function parseConditionValue(
+  conditionString: string,
+  availableFields: { id: string; label: string }[],
+): ConditionRule[] {
+  const parsedRules = conditionString
+    .split(/\s+AND\s+/i)
+    .map((part) => {
+      const match = part.trim().match(/^(\S+)\s*(>=|<=|>|<|=)\s*(.+)$/);
+      if (!match) return null;
+
+      return {
+        field: match[1],
+        operator: match[2] as Operator,
+        value: match[3].trim(),
+      };
+    })
+    .filter((rule): rule is ConditionRule => rule !== null);
+
+  return parsedRules.length > 0 ? parsedRules : [createDefaultRule(availableFields)];
+}
+
 export function TriggerConditionBuilder({
   initialRules,
+  value,
   onChange,
   availableFields = DEFAULT_FIELDS,
 }: TriggerConditionBuilderProps) {
   const [rules, setRules] = useState<ConditionRule[]>(
-    initialRules || [{ field: availableFields[0].id, operator: ">", value: "" }]
+    value !== undefined
+      ? parseConditionValue(value, availableFields)
+      : initialRules || [createDefaultRule(availableFields)]
   );
+  const lastEmittedValueRef = useRef(value);
+
+  useEffect(() => {
+    if (value === undefined || value === lastEmittedValueRef.current) return;
+    setRules(parseConditionValue(value, availableFields));
+  }, [availableFields, value]);
 
   const updateRule = (index: number, updates: Partial<ConditionRule>) => {
     const nextRules = [...rules];
@@ -54,10 +96,8 @@ export function TriggerConditionBuilder({
   };
 
   const notifyChange = (currentRules: ConditionRule[]) => {
-    const str = currentRules
-      .filter((r) => r.value.trim() !== "")
-      .map((r) => `${r.field} ${r.operator} ${r.value}`)
-      .join(" AND ");
+    const str = serializeRules(currentRules);
+    lastEmittedValueRef.current = str;
     onChange(str);
   };
 
@@ -122,10 +162,7 @@ export function TriggerConditionBuilder({
         <span className="metadata-label">Previewed Logic</span>
         <code className="condition-preview__code">
           {rules.filter((r) => r.value.trim() !== "").length > 0
-            ? rules
-                .filter((r) => r.value.trim() !== "")
-                .map((r) => `${r.field} ${r.operator} ${r.value}`)
-                .join(" AND ")
+            ? serializeRules(rules)
             : "No valid conditions set"}
         </code>
       </div>

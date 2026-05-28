@@ -107,6 +107,17 @@ describe("oracle and trigger controls", () => {
     fireEvent.change(valueInput, { target: { value: "120" } });
     expect(onChange).toHaveBeenCalledWith("temperature > 120");
   });
+
+  it("hydrates trigger condition strings into visible rules", () => {
+    const onChange = vi.fn();
+    render(<TriggerConditionBuilder value="rainfall >= 50" onChange={onChange} />);
+    const [fieldSelect, operatorSelect] = screen.getAllByRole("combobox");
+
+    expect(fieldSelect).toHaveValue("rainfall");
+    expect(operatorSelect).toHaveValue(">=");
+    expect(screen.getByDisplayValue("50")).toBeInTheDocument();
+    expect(screen.getByText("rainfall >= 50")).toBeInTheDocument();
+  });
 });
 
 describe("premium, validation, transaction and amount input", () => {
