@@ -417,74 +417,78 @@ export default function TransactionHistoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {paginated.map((tx) => (
-                  <React.Fragment key={tx.id}>
-                    <tr
-                      className={`tx-row ${expandedId === tx.id ? 'tx-row--expanded' : ''}`}
-                      onClick={() =>
-                        setExpandedId(expandedId === tx.id ? null : tx.id)
-                      }
-                      style={{ cursor: 'pointer' }}
-                      aria-expanded={expandedId === tx.id}
-                    >
-                      <td data-label="Date">{formatDate(tx.created_at)}</td>
-                      <td data-label="Type">
-                        <TypeBadge type={tx.transaction_type} />
-                      </td>
-                      <td data-label="Amount" className="tx-amount">
-                        {tx.amount.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 7,
-                        })}
-                      </td>
-                      <td data-label="Status">
-                        <StatusBadge status={tx.status} />
-                      </td>
-                      <td data-label="Hash">
-                        <a
-                          href={`${STELLAR_EXPLORER_BASE}${tx.transaction_hash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="tx-hash-link"
-                          onClick={(e) => e.stopPropagation()}
-                          aria-label={`View transaction ${shortenHash(tx.transaction_hash)} on Stellar Explorer`}
-                        >
-                          <span>{shortenHash(tx.transaction_hash)}</span>
-                          <span className="tx-external-icon" aria-hidden="true">
-                            <Icon
-                              name="arrow-up-right"
-                              size="sm"
-                              tone="accent"
-                            />
-                          </span>
-                        </a>
-                      </td>
-                      <td data-label="Details">
-                        <button
-                          className="tx-expand-btn"
-                          aria-label={`${expandedId === tx.id ? 'Collapse' : 'Expand'} transaction ${tx.id} details`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedId(expandedId === tx.id ? null : tx.id);
-                          }}
-                        >
-                          <Icon
-                            name={
-                              expandedId === tx.id
-                                ? 'chevron-up'
-                                : 'chevron-down'
-                            }
-                            size="sm"
-                            tone="muted"
-                          />
-                        </button>
-                      </td>
-                    </tr>
-                    {expandedId === tx.id && (
+                {paginated.map((tx) => {
+                  const detailRowId = `transaction-${tx.id}-details`;
+                  const isExpanded = expandedId === tx.id;
+
+                  return (
+                    <React.Fragment key={tx.id}>
                       <tr
-                        className="tx-detail-row"
-                        aria-label="Transaction detail"
+                        className={`tx-row ${isExpanded ? 'tx-row--expanded' : ''}`}
+                        onClick={() => setExpandedId(isExpanded ? null : tx.id)}
+                        style={{ cursor: 'pointer' }}
+                        aria-expanded={isExpanded}
                       >
+                        <td data-label="Date">{formatDate(tx.created_at)}</td>
+                        <td data-label="Type">
+                          <TypeBadge type={tx.transaction_type} />
+                        </td>
+                        <td data-label="Amount" className="tx-amount">
+                          {tx.amount.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 7,
+                          })}
+                        </td>
+                        <td data-label="Status">
+                          <StatusBadge status={tx.status} />
+                        </td>
+                        <td data-label="Hash">
+                          <a
+                            href={`${STELLAR_EXPLORER_BASE}${tx.transaction_hash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="tx-hash-link"
+                            onClick={(e) => e.stopPropagation()}
+                            aria-label={`View transaction ${shortenHash(tx.transaction_hash)} on Stellar Explorer`}
+                          >
+                            <span>{shortenHash(tx.transaction_hash)}</span>
+                            <span
+                              className="tx-external-icon"
+                              aria-hidden="true"
+                            >
+                              <Icon
+                                name="arrow-up-right"
+                                size="sm"
+                                tone="accent"
+                              />
+                            </span>
+                          </a>
+                        </td>
+                        <td data-label="Details">
+                          <button
+                            className="tx-expand-btn"
+                            aria-controls={detailRowId}
+                            aria-expanded={isExpanded}
+                            aria-label={`${isExpanded ? 'Collapse' : 'Expand'} transaction ${tx.id} details`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExpandedId(isExpanded ? null : tx.id);
+                            }}
+                          >
+                            <Icon
+                              name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                              size="sm"
+                              tone="muted"
+                            />
+                          </button>
+                        </td>
+                      </tr>
+                      {isExpanded && (
+                        <tr
+                          id={detailRowId}
+                          className="tx-detail-row"
+                          aria-label="Transaction detail"
+                        >
                         <td colSpan={6}>
                           <div className="tx-detail-panel">
                             {tx.status === 'failed' &&
@@ -599,10 +603,11 @@ export default function TransactionHistoryPage() {
                             </div>
                           </div>
                         </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           )}
