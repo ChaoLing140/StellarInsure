@@ -241,6 +241,9 @@ const ar = {
       allTypes: "جميع الأنواع",
       newestFirst: "الأحدث أولاً",
       highestCoverage: "أعلى تغطية",
+      found: "وثائق وجدت",
+      updating: "جارٍ تحديث النتائج...",
+      upToDate: "المرشحات محدثة.",
     },
     empty: {
       title: "لم يتم العثور على وثائق",

@@ -31,8 +31,8 @@ export function PolicyTable({ policies, isLoading }: PolicyTableProps) {
     const sortedPolicies = useMemo(() => {
         const copy = [...policies];
         copy.sort((a, b) => {
-            let valA: any = "";
-            let valB: any = "";
+            let valA: string | number = "";
+            let valB: string | number = "";
 
             switch (sortField) {
                 case "id":
@@ -73,25 +73,29 @@ export function PolicyTable({ policies, isLoading }: PolicyTableProps) {
         }
     };
 
-    const SortIcon = ({ field }: { field: SortField }) => {
-        const getAriaLabel = (f: SortField): string => {
-            const fieldNames: Record<SortField, string> = {
-                id: "Policy ID",
-                premium: "Premium",
-                coverage: "Coverage",
-                expiry: "Expiry",
-                status: "Status",
-            };
-            const fieldName = fieldNames[f];
-            if (sortField !== f) return `Sort by ${fieldName}`;
-            return sortOrder === "asc" ? `${fieldName}, sorted ascending` : `${fieldName}, sorted descending`;
-        };
+    const fieldNames: Record<SortField, string> = {
+        id: "Policy ID",
+        premium: "Premium",
+        coverage: "Coverage",
+        expiry: "Expiry",
+        status: "Status",
+    };
 
-        if (sortField !== field) return <Icon name="chevron-up-down" size="sm" tone="muted" label={getAriaLabel(field)} />;
+    const getSortButtonAriaLabel = (field: SortField): string => {
+        const name = fieldNames[field];
+        if (sortField !== field) return `Sort by ${name}`;
+        return sortOrder === "asc"
+            ? `${name}, sorted ascending. Click to sort descending`
+            : `${name}, sorted descending. Click to sort ascending`;
+    };
+
+    const SortIcon = ({ field }: { field: SortField }) => {
+        const iconLabel = fieldNames[field];
+        if (sortField !== field) return <Icon name="chevron-up-down" size="sm" tone="muted" label={iconLabel} />;
         return sortOrder === "asc" ? (
-            <Icon name="chevron-up" size="sm" tone="accent" label={getAriaLabel(field)} />
+            <Icon name="chevron-up" size="sm" tone="accent" label={iconLabel} />
         ) : (
-            <Icon name="chevron-down" size="sm" tone="accent" label={getAriaLabel(field)} />
+            <Icon name="chevron-down" size="sm" tone="accent" label={iconLabel} />
         );
     };
 
@@ -113,7 +117,7 @@ export function PolicyTable({ policies, isLoading }: PolicyTableProps) {
                             <button
                                 onClick={() => toggleSort("id")}
                                 className="sort-button"
-                                aria-label="Sort by Policy ID, currently sorted ascending"
+                                aria-label={getSortButtonAriaLabel("id")}
                             >
                                 Policy ID <SortIcon field="id" />
                             </button>
@@ -122,7 +126,7 @@ export function PolicyTable({ policies, isLoading }: PolicyTableProps) {
                             <button
                                 onClick={() => toggleSort("premium")}
                                 className="sort-button"
-                                aria-label="Sort by Premium"
+                                aria-label={getSortButtonAriaLabel("premium")}
                             >
                                 Premium <SortIcon field="premium" />
                             </button>
@@ -131,7 +135,7 @@ export function PolicyTable({ policies, isLoading }: PolicyTableProps) {
                             <button
                                 onClick={() => toggleSort("coverage")}
                                 className="sort-button"
-                                aria-label="Sort by Coverage"
+                                aria-label={getSortButtonAriaLabel("coverage")}
                             >
                                 Coverage <SortIcon field="coverage" />
                             </button>
@@ -140,7 +144,7 @@ export function PolicyTable({ policies, isLoading }: PolicyTableProps) {
                             <button
                                 onClick={() => toggleSort("expiry")}
                                 className="sort-button"
-                                aria-label="Sort by Expiry"
+                                aria-label={getSortButtonAriaLabel("expiry")}
                             >
                                 Expiry <SortIcon field="expiry" />
                             </button>
@@ -149,7 +153,7 @@ export function PolicyTable({ policies, isLoading }: PolicyTableProps) {
                             <button
                                 onClick={() => toggleSort("status")}
                                 className="sort-button"
-                                aria-label="Sort by Status"
+                                aria-label={getSortButtonAriaLabel("status")}
                             >
                                 Status <SortIcon field="status" />
                             </button>

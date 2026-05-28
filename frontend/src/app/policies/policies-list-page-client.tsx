@@ -243,6 +243,13 @@ export default function PoliciesListPageClient() {
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    const stored = localStorage.getItem("policy-view-mode");
+    if (stored === "table" || stored === "grid") {
+      setViewMode(stored);
+    }
+  }, []);
+
   // Optimistic list — new policies appear immediately before server confirmation
   const {
     items: optimisticPolicies,
@@ -378,14 +385,20 @@ export default function PoliciesListPageClient() {
         <div className="view-toggle">
           <button
             className={`view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
-            onClick={() => setViewMode("grid")}
+            onClick={() => {
+              setViewMode("grid");
+              localStorage.setItem("policy-view-mode", "grid");
+            }}
             aria-label="Grid view"
           >
             <Icon name="grid-3x3" size="sm" />
           </button>
           <button
             className={`view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
-            onClick={() => setViewMode("table")}
+            onClick={() => {
+              setViewMode("table");
+              localStorage.setItem("policy-view-mode", "table");
+            }}
             aria-label="Table view"
           >
             <Icon name="list" size="sm" />
@@ -507,6 +520,15 @@ export default function PoliciesListPageClient() {
             </option>
           </select>
         </div>
+
+        {!isLoading && (
+          <p className="tx-result-count" aria-live="polite" aria-atomic="true">
+            {sorted.length} {t("policies.filters.found")}
+          </p>
+        )}
+        <p className="tx-filtering" aria-live="polite" role="status">
+          {isFiltering ? t("policies.filters.updating") : t("policies.filters.upToDate")}
+        </p>
       </div>
 
       {isLoading ? (

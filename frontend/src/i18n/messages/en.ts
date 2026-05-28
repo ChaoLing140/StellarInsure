@@ -212,6 +212,9 @@ const en = {
       sortBy: "Sort By",
       newestFirst: "Newest First",
       highestCoverage: "Highest Coverage",
+      found: "policies found",
+      updating: "Updating results...",
+      upToDate: "Filters are up to date.",
     },
     empty: {
       title: "No policies found",
