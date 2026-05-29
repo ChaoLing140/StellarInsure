@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 const DEBOUNCE_MS = 500;
 
-export function useAutosave<T>(key: string, initial: T): [T, (next: T) => void, () => void] {
+export function useAutosave<T>(key: string, initial: T): [T, (next: T) => void, () => void, boolean] {
   const [state, setState] = useState<T>(() => {
     if (typeof window === "undefined") return initial;
     try {
@@ -18,10 +18,13 @@ export function useAutosave<T>(key: string, initial: T): [T, (next: T) => void, 
     return initial;
   });
 
+  const [isSaved, setIsSaved] = useState(true);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    setIsSaved(false);
 
     if (timerRef.current) {
       clearTimeout(timerRef.current);
@@ -30,8 +33,10 @@ export function useAutosave<T>(key: string, initial: T): [T, (next: T) => void, 
     timerRef.current = setTimeout(() => {
       try {
         localStorage.setItem(key, JSON.stringify(state));
+        setIsSaved(true);
       } catch {
         // Storage full or unavailable, silently ignore
+        setIsSaved(false);
       }
     }, DEBOUNCE_MS);
 
@@ -44,6 +49,7 @@ export function useAutosave<T>(key: string, initial: T): [T, (next: T) => void, 
 
   const clear = useCallback(() => {
     setState(initial);
+    setIsSaved(true);
     try {
       localStorage.removeItem(key);
     } catch {
@@ -51,5 +57,5 @@ export function useAutosave<T>(key: string, initial: T): [T, (next: T) => void, 
     }
   }, [key, initial]);
 
-  return [state, setState, clear];
+  return [state, setState, clear, isSaved];
 }
