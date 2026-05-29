@@ -184,3 +184,115 @@ def test_claim_routes_require_authentication(client):
     response = client.get("/claims/")
 
     assert response.status_code in (401, 403)
+
+
+def test_list_claims_includes_total_pages(
+    client, auth_headers, auth_user, policy_factory, claim_factory, db_session
+):
+    """Test that list_claims includes total_pages in response"""
+    policy = policy_factory(auth_user, status=PolicyStatus.claim_pending)
+    
+    # Create 15 claims
+    for i in range(15):
+        claim_factory(auth_user, policy, claim_amount=100.0 + i)
+    
+    # Test with per_page=10
+    response = client.get("/claims/?page=1&per_page=10", headers=auth_headers)
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert "total_pages" in data
+    assert data["total_pages"] == 2  # 15 items / 10 per page = 2 pages
+    assert data["total"] == 15
+    assert len(data["claims"]) == 10
+
+
+def test_list_claims_total_pages_non_divisible(
+    client, auth_headers, auth_user, policy_factory, claim_factory, db_session
+):
+    """Test that total_pages rounds up correctly for non-divisible totals"""
+    policy = policy_factory(auth_user, status=PolicyStatus.claim_pending)
+    
+    # Create 23 claims
+    for i in range(23):
+        claim_factory(auth_user, policy, claim_amount=100.0 + i)
+    
+    # Test with per_page=7
+    response = client.get("/claims/?page=1&per_page=7", headers=auth_headers)
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_pages"] == 4  # 23 items / 7 per page = 4 pages (rounded up)
+    assert data["total"] == 23
+
+
+def test_list_claims_total_pages_empty_result(
+    client, auth_headers, auth_user, db_session
+):
+    """Test that total_pages is 0 for empty results"""
+    response = client.get("/claims/", headers=auth_headers)
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_pages"] == 0
+    assert data["total"] == 0
+
+
+def test_list_claims_by_policy_includes_total_pages(
+    client, auth_headers, auth_user, policy_factory, claim_factory, db_session
+):
+    """Test that list_claims_by_policy includes total_pages in response"""
+    policy = policy_factory(auth_user, status=PolicyStatus.claim_pending)
+    
+    # Create 12 claims
+    for i in range(12):
+        claim_factory(auth_user, policy, claim_amount=100.0 + i)
+    
+    # Test with per_page=5
+    response = client.get(
+        f"/claims/policy/{policy.id}?page=1&per_page=5",
+        headers=auth_headers
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert "total_pages" in data
+    assert data["total_pages"] == 3  # 12 items / 5 per page = 3 pages (rounded up)
+    assert data["total"] == 12
+    assert len(data["claims"]) == 5
+
+
+def test_list_claims_by_policy_total_pages_empty(
+    client, auth_headers, auth_user, policy_factory, db_session
+):
+    """Test that total_pages is 0 for empty policy claims"""
+    policy = policy_factory(auth_user, status=PolicyStatus.active)
+    
+    response = client.get(f"/claims/policy/{policy.id}", headers=auth_headers)
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_pages"] == 0
+    assert data["total"] == 0
+
+
+def test_list_claims_by_policy_total_pages_exact_division(
+    client, auth_headers, auth_user, policy_factory, claim_factory, db_session
+):
+    """Test total_pages when total divides evenly by per_page"""
+    policy = policy_factory(auth_user, status=PolicyStatus.claim_pending)
+    
+    # Create exactly 20 claims
+    for i in range(20):
+        claim_factory(auth_user, policy, claim_amount=100.0 + i)
+    
+    # Test with per_page=10 (divides evenly)
+    response = client.get(
+        f"/claims/policy/{policy.id}?page=1&per_page=10",
+        headers=auth_headers
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_pages"] == 2  # 20 items / 10 per page = exactly 2 pages
+    assert data["total"] == 20

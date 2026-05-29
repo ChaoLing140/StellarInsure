@@ -256,12 +256,15 @@ async def list_claims(
         for claim in claims
     ]
 
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 0
+
     return {
         "claims": claim_responses,
         "total": total,
         "page": page,
         "per_page": per_page,
-        "has_next": (offset + per_page) < total
+        "has_next": (offset + per_page) < total,
+        "total_pages": total_pages
     }
 
 
@@ -368,10 +371,13 @@ async def list_claims_by_policy(
         for claim in claims
     ]
 
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 0
+
     return {
         "claims": claim_responses,
         "total": total,
         "page": page,
         "per_page": per_page,
-        "has_next": (offset + per_page) < total
+        "has_next": (offset + per_page) < total,
+        "total_pages": total_pages
     }

@@ -47,6 +47,14 @@ async def get_transactions(
     
     Returns paginated results with policy and claim relationships included.
     """
+    # Validate date range
+    if start_date and end_date and end_date < start_date:
+        from ..errors import ValidationError
+        raise ValidationError(
+            detail="end_date must be greater than or equal to start_date",
+            error_code="VAL_002"
+        )
+    
     # Build query with filters
     query = db.query(Transaction).filter(Transaction.user_id == current_user.id)
     
@@ -88,11 +96,13 @@ async def get_transactions(
     ]
     
     has_next = (offset + per_page) < total
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 0
     
     return {
         "transactions": transaction_responses,
         "total": total,
         "page": page,
         "per_page": per_page,
-        "has_next": has_next
+        "has_next": has_next,
+        "total_pages": total_pages
     }

@@ -196,3 +196,149 @@ def test_get_transactions_only_returns_user_own_transactions(client, authenticat
     data = response.json()
     assert data["total"] == 1
     assert data["transactions"][0]["user_id"] == user.id
+
+
+def test_get_transactions_rejects_invalid_date_range(client, authenticated_user, db_session):
+    """Test that reversed date ranges are rejected with 422"""
+    user, headers = authenticated_user
+    
+    now = datetime.utcnow()
+    yesterday = now - timedelta(days=1)
+    
+    # Try to query with end_date before start_date
+    start_date = now.isoformat()
+    end_date = yesterday.isoformat()
+    
+    response = client.get(
+        f"/transactions?start_date={start_date}&end_date={end_date}",
+        headers=headers
+    )
+    
+    assert response.status_code == 422
+    data = response.json()
+    assert data["error_code"] == "VAL_002"
+    assert "end_date must be greater than or equal to start_date" in data["detail"]
+
+
+def test_get_transactions_accepts_valid_date_ranges(client, authenticated_user, db_session):
+    """Test that valid date ranges work correctly"""
+    user, headers = authenticated_user
+    
+    now = datetime.utcnow()
+    yesterday = now - timedelta(days=1)
+    
+    tx = Transaction(
+        user_id=user.id,
+        transaction_hash="hash1",
+        amount=100.0,
+        transaction_type="premium",
+        status="successful",
+        created_at=now
+    )
+    db_session.add(tx)
+    db_session.commit()
+    
+    # Test with valid range
+    start_date = yesterday.isoformat()
+    end_date = now.isoformat()
+    
+    response = client.get(
+        f"/transactions?start_date={start_date}&end_date={end_date}",
+        headers=headers
+    )
+    
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+
+
+def test_get_transactions_accepts_equal_dates(client, authenticated_user, db_session):
+    """Test that equal start and end dates are accepted"""
+    user, headers = authenticated_user
+    
+    now = datetime.utcnow()
+    
+    # Test with equal dates
+    date_str = now.isoformat()
+    
+    response = client.get(
+        f"/transactions?start_date={date_str}&end_date={date_str}",
+        headers=headers
+    )
+    
+    assert response.status_code == 200
+
+
+def test_get_transactions_accepts_one_sided_date_filters(client, authenticated_user, db_session):
+    """Test that one-sided date filters work correctly"""
+    user, headers = authenticated_user
+    
+    now = datetime.utcnow()
+    
+    tx = Transaction(
+        user_id=user.id,
+        transaction_hash="hash1",
+        amount=100.0,
+        transaction_type="premium",
+        status="successful",
+        created_at=now
+    )
+    db_session.add(tx)
+    db_session.commit()
+    
+    # Test with only start_date
+    response = client.get(
+        f"/transactions?start_date={now.isoformat()}",
+        headers=headers
+    )
+    assert response.status_code == 200
+    
+    # Test with only end_date
+    response = client.get(
+        f"/transactions?end_date={now.isoformat()}",
+        headers=headers
+    )
+    assert response.status_code == 200
+
+
+def test_get_transactions_includes_total_pages(client, authenticated_user, db_session):
+    """Test that total_pages is included in response"""
+    user, headers = authenticated_user
+    
+    # Create 25 transactions
+    for i in range(25):
+        tx = Transaction(
+            user_id=user.id,
+            transaction_hash=f"hash{i}",
+            amount=100.0 + i,
+            transaction_type="premium",
+            status="successful"
+        )
+        db_session.add(tx)
+    db_session.commit()
+    
+    # Test with per_page=10
+    response = client.get("/transactions?page=1&per_page=10", headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert "total_pages" in data
+    assert data["total_pages"] == 3  # 25 items / 10 per page = 3 pages
+    assert data["total"] == 25
+    
+    # Test with per_page=7 (non-divisible)
+    response = client.get("/transactions?page=1&per_page=7", headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_pages"] == 4  # 25 items / 7 per page = 4 pages (rounded up)
+
+
+def test_get_transactions_total_pages_empty_result(client, authenticated_user, db_session):
+    """Test that total_pages is 0 for empty results"""
+    user, headers = authenticated_user
+    
+    response = client.get("/transactions", headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_pages"] == 0
+    assert data["total"] == 0
+
