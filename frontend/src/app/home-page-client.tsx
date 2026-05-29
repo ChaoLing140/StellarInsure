@@ -57,27 +57,57 @@ export default function HomePage() {
             </div>
           </article>
 
-          <aside className="metrics" aria-label={t("hero.metricsLabel")}>
-            <div className="hero-card metric metric--highlight">
-              <Icon name="clock" size="md" tone="accent" />
-              <strong>3m</strong>
-              <span>{t("metrics.processing")}</span>
+          {/* Product preview panel (#319) */}
+          <aside className="hero-preview" aria-label="Product workflow preview">
+            <div className="hero-preview__panel" aria-hidden="true">
+              <div className="hero-preview__bar">
+                <span className="hero-preview__dot" />
+                <span className="hero-preview__dot" />
+                <span className="hero-preview__dot" />
+                <span className="hero-preview__title">Policy Dashboard</span>
+              </div>
+              <div className="hero-preview__steps">
+                <div className="hero-preview__step hero-preview__step--done">
+                  <Icon name="shield" size="sm" tone="success" />
+                  <span>Connect Stellar wallet</span>
+                </div>
+                <div className="hero-preview__step hero-preview__step--done">
+                  <Icon name="spark" size="sm" tone="success" />
+                  <span>Select coverage type</span>
+                </div>
+                <div className="hero-preview__step hero-preview__step--active">
+                  <Icon name="clock" size="sm" tone="accent" />
+                  <span>Policy active · 28 days left</span>
+                </div>
+                <div className="hero-preview__step hero-preview__step--pending">
+                  <Icon name="globe" size="sm" tone="muted" />
+                  <span>Payout on trigger event</span>
+                </div>
+              </div>
             </div>
-            <div className="hero-card metric">
-              <Icon name="globe" size="md" tone="accent" />
-              <strong>24/7</strong>
-              <span>{t("metrics.availability")}</span>
-            </div>
-            <div className="hero-card metric">
-              <Icon name="language" size="md" tone="accent" />
-              <strong>2</strong>
-              <span>{t("metrics.languages")}</span>
+            <div className="metrics" aria-label={t("hero.metricsLabel")}>
+              <div className="hero-card metric metric--highlight">
+                <Icon name="clock" size="md" tone="accent" />
+                <strong>3m</strong>
+                <span>{t("metrics.processing")}</span>
+              </div>
+              <div className="hero-card metric">
+                <Icon name="globe" size="md" tone="accent" />
+                <strong>24/7</strong>
+                <span>{t("metrics.availability")}</span>
+              </div>
+              <div className="hero-card metric">
+                <Icon name="language" size="md" tone="accent" />
+                <strong>2</strong>
+                <span>{t("metrics.languages")}</span>
+              </div>
             </div>
           </aside>
         </div>
       </section>
 
-      <section id="features" aria-labelledby="features-title">
+      {/* #320 — removed outer card wrapper; features now sit directly on the page surface */}
+      <section id="features" aria-labelledby="features-title" className="section--flush">
         <div className="section-header">
           <span className="eyebrow">Protocol Features</span>
           <h2 id="features-title">Why StellarInsure</h2>

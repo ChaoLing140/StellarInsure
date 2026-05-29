@@ -53,11 +53,12 @@
   --space-6: 3rem;
   --space-7: 4rem;
 
-  /* Radius */
-  --radius-sm: 1rem;
-  --radius-md: 1.5rem;
-  --radius-lg: 2rem;
-  --radius-pill: 999px;
+  /* Radius — tightened for a more utilitarian fintech feel (#321) */
+  --radius-xs: 0.25rem;   /* input fields, tight controls */
+  --radius-sm: 0.5rem;    /* cards, panels (was 1rem) */
+  --radius-md: 0.75rem;   /* modals, dropdowns (was 1.5rem) */
+  --radius-lg: 1rem;      /* hero / feature sections (was 2rem) */
+  --radius-pill: 999px;   /* badges, status chips — intentionally pill */
 
   /* Elevation */
   --shadow-100: 0 12px 30px rgba(16, 37, 66, 0.08);
@@ -128,9 +129,10 @@
   --card-border: rgba(255, 255, 255, 0.09);
   --text: #dce5f0;
   --text-muted: #7d95b0;
-  --accent: #d4784a;
-  --accent-strong: #e8996e;
-  --accent-soft: rgba(212, 120, 74, 0.18);
+  /* Accent — lightened to meet WCAG AA 4.5:1 on dark surfaces (#323) */
+  --accent: #f0935f;
+  --accent-strong: #f7b899;
+  --accent-soft: rgba(240, 147, 95, 0.18);
   --focus: #4ab0c5;
   --shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
 
