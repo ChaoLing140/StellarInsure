@@ -9,15 +9,13 @@ import React, {
   type RefObject,
 } from 'react';
 import { Icon, type IconName } from '@/components/icon';
+import {
+  MOCK_NOTIFICATIONS,
+  useNotifications,
+  type Notification,
+} from '@/lib/notifications-store';
 
-export interface Notification {
-  id: string;
-  type: 'policy' | 'claim' | 'transaction';
-  title: string;
-  message: string;
-  timestamp: Date;
-  read: boolean;
-}
+export type { Notification };
 
 interface NotificationsPanelProps {
   isOpen: boolean;
@@ -25,32 +23,9 @@ interface NotificationsPanelProps {
   returnFocusRef?: RefObject<HTMLElement>;
 }
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: '1',
-    type: 'policy',
-    title: 'Policy Updated',
-    message: 'Your weather protection policy has been activated.',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    read: false,
-  },
-  {
-    id: '2',
-    type: 'claim',
-    title: 'Claim Approved',
-    message: 'Your claim POL-2024-00124 has been approved for payment.',
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    read: false,
-  },
-  {
-    id: '3',
-    type: 'transaction',
-    title: 'Premium Paid',
-    message: 'Your premium payment of 1000 XLM has been confirmed.',
-    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-    read: true,
-  },
-];
+// MOCK_NOTIFICATIONS now lives in @/lib/notifications-store so the bell
+// trigger in `site-header.tsx` can subscribe to the same source of truth
+// (#302).
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -88,8 +63,9 @@ export function NotificationsPanel({
   onClose,
   returnFocusRef,
 }: NotificationsPanelProps) {
-  const [notifications, setNotifications] =
-    useState<Notification[]>(MOCK_NOTIFICATIONS);
+  // #302 — Read from the shared store so the bell's unread badge in
+  // site-header sees the same source of truth this panel mutates.
+  const { notifications, setNotifications } = useNotifications();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);

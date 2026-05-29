@@ -312,9 +312,14 @@ export default function PoliciesListPageClient() {
         const matchesSearch =
           policy.title.toLowerCase().includes(deferredSearch.toLowerCase()) ||
           policy.oracleSource.toLowerCase().includes(deferredSearch.toLowerCase());
+        // #308 — Normalise reversed min/max so a user-typed `min > max`
+        // doesn't silently collapse results to zero. The inline warning
+        // beside the filters explains the swap to the user.
+        const effectiveMin = Math.min(minCoverage, maxCoverage);
+        const effectiveMax = Math.max(minCoverage, maxCoverage);
         const matchesCoverage =
-          policy.coverageAmount >= minCoverage &&
-          policy.coverageAmount <= maxCoverage;
+          policy.coverageAmount >= effectiveMin &&
+          policy.coverageAmount <= effectiveMax;
         const matchesDate =
           (!startDate || policy.createdAt >= startDate) &&
           (!endDate || policy.createdAt <= endDate);
@@ -496,6 +501,51 @@ export default function PoliciesListPageClient() {
             <option value="coverage">Coverage</option>
           </select>
         </label>
+
+        {/* #308 — Coverage min/max filters with reversed-range guard.
+            Invalid combinations are explained inline, announced via the
+            live region below, and *not* silently applied (the effective
+            range is swapped so results don't collapse to zero). */}
+        <label>
+          Min coverage
+          <input
+            type="number"
+            min={0}
+            value={minCoverage}
+            onChange={(event) =>
+              handleFilterChange(() =>
+                setMinCoverage(Number(event.target.value) || 0),
+              )
+            }
+            aria-invalid={minCoverage > maxCoverage}
+            aria-describedby="coverage-range-warning"
+          />
+        </label>
+        <label>
+          Max coverage
+          <input
+            type="number"
+            min={0}
+            value={maxCoverage}
+            onChange={(event) =>
+              handleFilterChange(() =>
+                setMaxCoverage(Number(event.target.value) || 0),
+              )
+            }
+            aria-invalid={minCoverage > maxCoverage}
+            aria-describedby="coverage-range-warning"
+          />
+        </label>
+        <p
+          id="coverage-range-warning"
+          className="policies-filters__warning"
+          role="status"
+          aria-live="polite"
+        >
+          {minCoverage > maxCoverage
+            ? `Minimum coverage (${minCoverage.toLocaleString()}) is greater than maximum (${maxCoverage.toLocaleString()}). Values were swapped automatically; results show the full range you intended.`
+            : ''}
+        </p>
 
         <div className="view-toggle" role="group" aria-label="View mode">
           <button

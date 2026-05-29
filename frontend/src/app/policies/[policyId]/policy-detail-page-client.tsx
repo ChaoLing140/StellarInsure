@@ -269,57 +269,63 @@ export default function PolicyDetailPage({
   }
 
   if (isLoading) {
+    /* #339 — Skeleton layout moved into CSS classes
+       (`.policy-skeleton__*` in globals.css). Inline styles on each
+       Skeleton previously hardcoded `gridTemplateColumns: "1fr 1fr"`
+       so the panel block overflowed at 375px-wide viewports. The
+       class-based layout collapses to a single column at narrow
+       widths and keeps the existing two-column structure on desktop. */
     return (
       <main id="main-content" tabIndex={-1} className="policy-page" aria-busy="true">
         <span className="visually-hidden">Loading policy data, please wait.</span>
-        <section className="policy-shell">
+        <section className="policy-shell policy-skeleton">
           {/* Header */}
-          <div className="policy-header" style={{ marginBottom: "2rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem", flexWrap: "wrap" }}>
-              <div style={{ flex: 1 }}>
-                <Skeleton style={{ width: "80px", height: "12px", marginBottom: "0.75rem" }} />
-                <Skeleton style={{ width: "55%", height: "32px", marginBottom: "0.5rem" }} />
-                <Skeleton style={{ width: "30%", height: "14px" }} />
+          <div className="policy-header policy-skeleton__header">
+            <div className="policy-skeleton__header-row">
+              <div className="policy-skeleton__header-text">
+                <Skeleton className="policy-skeleton__line policy-skeleton__line--label" />
+                <Skeleton className="policy-skeleton__line policy-skeleton__line--title" />
+                <Skeleton className="policy-skeleton__line policy-skeleton__line--meta" />
               </div>
-              <div style={{ display: "flex", gap: "0.75rem" }}>
-                <Skeleton style={{ width: "110px", height: "38px", borderRadius: "8px" }} />
-                <Skeleton style={{ width: "110px", height: "38px", borderRadius: "8px" }} />
+              <div className="policy-skeleton__header-actions">
+                <Skeleton className="policy-skeleton__button" />
+                <Skeleton className="policy-skeleton__button" />
               </div>
             </div>
           </div>
 
           {/* Key Metrics Grid */}
-          <div className="policy-grid" style={{ marginBottom: "2rem" }}>
+          <div className="policy-grid policy-skeleton__metrics">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={`metric-sk-${i}`} className="hero-card" style={{ padding: "1.25rem" }}>
-                <Skeleton style={{ width: "28px", height: "28px", borderRadius: "50%", marginBottom: "0.75rem" }} />
-                <Skeleton style={{ width: "60%", height: "11px", marginBottom: "0.5rem" }} />
-                <Skeleton style={{ width: "80%", height: "20px" }} />
+              <div key={`metric-sk-${i}`} className="hero-card policy-skeleton__metric">
+                <Skeleton className="policy-skeleton__metric-icon" />
+                <Skeleton className="policy-skeleton__line policy-skeleton__line--label" />
+                <Skeleton className="policy-skeleton__line policy-skeleton__line--value" />
               </div>
             ))}
           </div>
 
-          {/* Two-column panel area */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "2rem" }}>
+          {/* Two-column panel area (collapses to one column < 640px) */}
+          <div className="policy-skeleton__panels">
             {Array.from({ length: 2 }).map((_, j) => (
-              <div key={`panel-sk-${j}`} className="panel" style={{ padding: "1.5rem" }}>
-                <Skeleton style={{ width: "40%", height: "14px", marginBottom: "1rem" }} />
+              <div key={`panel-sk-${j}`} className="panel policy-skeleton__panel">
+                <Skeleton className="policy-skeleton__line policy-skeleton__line--panel-title" />
                 <SkeletonText lines={4} />
               </div>
             ))}
           </div>
 
           {/* Timeline / claim list rows */}
-          <div className="panel" style={{ padding: "1.5rem" }}>
-            <Skeleton style={{ width: "35%", height: "14px", marginBottom: "1.25rem" }} />
+          <div className="panel policy-skeleton__panel">
+            <Skeleton className="policy-skeleton__line policy-skeleton__line--panel-title" />
             {Array.from({ length: 3 }).map((_, k) => (
-              <div key={`row-sk-${k}`} style={{ display: "flex", gap: "1rem", alignItems: "center", marginBottom: "1rem" }}>
-                <Skeleton style={{ width: "36px", height: "36px", borderRadius: "50%", flexShrink: 0 }} />
-                <div style={{ flex: 1 }}>
-                  <Skeleton style={{ width: "50%", height: "12px", marginBottom: "0.4rem" }} />
-                  <Skeleton style={{ width: "30%", height: "10px" }} />
+              <div key={`row-sk-${k}`} className="policy-skeleton__row">
+                <Skeleton className="policy-skeleton__row-avatar" />
+                <div className="policy-skeleton__row-text">
+                  <Skeleton className="policy-skeleton__line policy-skeleton__line--row-title" />
+                  <Skeleton className="policy-skeleton__line policy-skeleton__line--row-meta" />
                 </div>
-                <Skeleton style={{ width: "70px", height: "24px", borderRadius: "20px" }} />
+                <Skeleton className="policy-skeleton__row-status" />
               </div>
             ))}
           </div>

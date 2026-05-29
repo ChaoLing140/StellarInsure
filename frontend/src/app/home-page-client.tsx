@@ -33,10 +33,24 @@ export default function HomePage() {
             <p className="hero-description">{t("hero.description")}</p>
 
             <div className="cta-row hero-cta">
-              <a className="cta-primary cta-primary--large" href="#coverage" data-onboarding="hero-primary-cta" rel="noopener noreferrer">
+              {/* #318 — Primary CTA now routes to `/create` (the product's
+                  actual creation workflow) instead of jumping to the
+                  on-page #coverage anchor. The secondary CTA remains
+                  in-page so visitors can still learn how it works. */}
+              <Link
+                className="cta-primary cta-primary--large"
+                href="/create"
+                data-onboarding="hero-primary-cta"
+                aria-label="Start creating a new insurance policy"
+              >
                 {t("hero.primaryCta")}
-              </a>
-              <a className="cta-secondary cta-secondary--large" href="#workflow" rel="noopener noreferrer">
+              </Link>
+              <a
+                className="cta-secondary cta-secondary--large"
+                href="#workflow"
+                rel="noopener noreferrer"
+                aria-label="Learn how the protocol works"
+              >
                 {t("hero.secondaryCta")}
               </a>
             </div>

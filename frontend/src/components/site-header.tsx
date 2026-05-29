@@ -17,6 +17,7 @@ import { WalletConnectionButton } from '@/components/wallet-connection-button';
 import { CommandPalette } from '@/components/command-palette';
 import { KeyboardShortcutsHelp } from '@/components/keyboard-shortcuts-help';
 import { NotificationsPanel } from '@/components/notifications-panel';
+import { useNotifications } from '@/lib/notifications-store';
 import { Icon } from '@/components/icon';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -99,6 +100,9 @@ export function SiteHeader() {
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const notificationsTriggerRef = useRef<HTMLButtonElement>(null);
+  // #302 — Subscribed to the shared notifications store so the bell's
+  // unread indicator stays in sync with the panel without prop drilling.
+  const { unreadCount } = useNotifications();
 
   const closeDrawer = useCallback(() => {
     setDrawerOpen(false);
@@ -225,12 +229,25 @@ export function SiteHeader() {
         <div className="topbar-actions topbar-actions--desktop">
           <button
             ref={notificationsTriggerRef}
-            className="topbar-action-btn"
+            className="topbar-action-btn topbar-action-btn--with-badge"
             onClick={() => setNotificationsOpen(true)}
-            aria-label="Open notifications"
+            aria-label={
+              unreadCount > 0
+                ? `Open notifications, ${unreadCount} unread`
+                : 'Open notifications'
+            }
             title="Notifications"
           >
             <Icon name="bell" size="md" tone="muted" />
+            {unreadCount > 0 && (
+              <span
+                className="topbar-action-badge"
+                aria-hidden="true"
+                data-testid="notifications-unread-badge"
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
           </button>
           <CommandPalette />
           <KeyboardShortcutsHelp />
