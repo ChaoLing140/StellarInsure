@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.27.2...v1.28.0) (2026-05-29)
+
+
+### Features
+
+* unread badge, coverage range guard, /create CTA, responsive skeleton ([30adf9b](https://github.com/ChaoLing140/StellarInsure/commit/30adf9b454aea461eac8bc57882a16e3587952ed)), closes [#302](https://github.com/ChaoLing140/StellarInsure/issues/302) [#318](https://github.com/ChaoLing140/StellarInsure/issues/318) [#308](https://github.com/ChaoLing140/StellarInsure/issues/308) [#339](https://github.com/ChaoLing140/StellarInsure/issues/339)
+
 ## [1.27.2](https://github.com/ChaoLing140/StellarInsure/compare/v1.27.1...v1.27.2) (2026-05-29)
 
 
