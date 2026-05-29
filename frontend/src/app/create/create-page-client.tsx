@@ -286,9 +286,9 @@ function SuccessReceipt({
       <div className="policy-copy-block">
         <h4>{t("createPolicy.receipt.nextSteps")}</h4>
         <ul>
-          <li>Track settlement and status updates from transaction history.</li>
-          <li>Share this receipt with operations or compliance stakeholders.</li>
-          <li>Create another policy for a separate trigger condition.</li>
+          <li>{t("createPolicy.receipt.nextStepsItem1")}</li>
+          <li>{t("createPolicy.receipt.nextStepsItem2")}</li>
+          <li>{t("createPolicy.receipt.nextStepsItem3")}</li>
         </ul>
       </div>
 
@@ -316,7 +316,7 @@ function SuccessReceipt({
 
 export default function CreatePolicyPageClient() {
   const { t } = useAppTranslation();
-  const [draft, setDraft, clearDraft] = useAutosave<PolicyDraft>(
+  const [draft, setDraft, clearDraft, isSaved] = useAutosave<PolicyDraft>(
     "stellarinsure-policy-draft",
     INITIAL_DRAFT,
   );
@@ -531,6 +531,11 @@ export default function CreatePolicyPageClient() {
         <span className="eyebrow">{t("createPolicy.eyebrow")}</span>
         <h1 id="create-title">{t("createPolicy.title")}</h1>
         <p>{t("createPolicy.description")}</p>
+        {step > 0 && (
+          <p className="autosave-status" role="status" aria-live="polite" aria-atomic="true">
+            {isSaved ? "✓ Draft saved" : "Saving..."}
+          </p>
+        )}
       </div>
 
       <StepIndicator current={step} />

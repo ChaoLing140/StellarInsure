@@ -35,6 +35,26 @@ export default function SettingsPageClient() {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
 
+  const sections: SettingsSection[] = [
+    { name: "account", label: "Account" },
+    { name: "preferences", label: "Preferences" },
+    { name: "security", label: "Security" },
+    { name: "address-book", label: "Address Book" },
+  ];
+
+  function handleTabKeyDown(event: React.KeyboardEvent<HTMLButtonElement>, index: number) {
+    if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
+      event.preventDefault();
+      let nextIndex = index;
+      if (event.key === "ArrowRight") {
+        nextIndex = (index + 1) % sections.length;
+      } else if (event.key === "ArrowLeft") {
+        nextIndex = (index - 1 + sections.length) % sections.length;
+      }
+      setActiveTab(sections[nextIndex].name);
+    }
+  }
+
   const isDirty =
     timezone !== savedSettings.timezone ||
     currency !== savedSettings.currency ||
@@ -44,13 +64,6 @@ export default function SettingsPageClient() {
     pushNotifications !== savedSettings.pushNotifications ||
     twoFactorEnabled !== savedSettings.twoFactorEnabled ||
     dataSharing !== savedSettings.dataSharing;
-
-  const sections: SettingsSection[] = [
-    { name: "account", label: "Account" },
-    { name: "preferences", label: "Preferences" },
-    { name: "security", label: "Security" },
-    { name: "address-book", label: "Address Book" },
-  ];
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
@@ -79,7 +92,7 @@ export default function SettingsPageClient() {
       <div className="settings-container">
         {/* Tabs */}
         <div className="settings-tabs" role="tablist">
-          {sections.map((section) => (
+          {sections.map((section, index) => (
             <button
               key={section.name}
               id={`tab-${section.name}`}
@@ -88,6 +101,7 @@ export default function SettingsPageClient() {
               aria-controls={`panel-${section.name}`}
               className={`settings-tab ${activeTab === section.name ? "active" : ""}`}
               onClick={() => setActiveTab(section.name)}
+              onKeyDown={(e) => handleTabKeyDown(e, index)}
             >
               {section.label}
             </button>
