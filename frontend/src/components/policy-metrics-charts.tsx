@@ -54,6 +54,22 @@ export function PolicyMetricsCharts({
             />
           ))}
         </svg>
+        <table className="chart-data-table" aria-label="Premium trend data">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th>Premium (XLM)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {PREMIUMS.map((item) => (
+              <tr key={item.label}>
+                <td>{item.label}</td>
+                <td>{item.value.toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </article>
       <article className="panel" aria-labelledby="payouts-chart-title">
         <h3 id="payouts-chart-title">Payouts by Policy (Bar)</h3>
@@ -71,6 +87,22 @@ export function PolicyMetricsCharts({
             </div>
           ))}
         </div>
+        <table className="chart-data-table" aria-label="Payout distribution data">
+          <thead>
+            <tr>
+              <th>Policy Type</th>
+              <th>Payouts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {PAYOUTS.map((item) => (
+              <tr key={item.label}>
+                <td>{item.label}</td>
+                <td>{item.value}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </article>
     </section>
   );
