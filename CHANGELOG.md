@@ -1,3 +1,10 @@
+## [1.27.1](https://github.com/ChaoLing140/StellarInsure/compare/v1.27.0...v1.27.1) (2026-05-29)
+
+
+### Bug Fixes
+
+* backend validation and pagination improvements ([f5541a4](https://github.com/ChaoLing140/StellarInsure/commit/f5541a464fa0240f573d9ed4b96b6e421b91387d)), closes [#358](https://github.com/ChaoLing140/StellarInsure/issues/358) [#355](https://github.com/ChaoLing140/StellarInsure/issues/355) [#361](https://github.com/ChaoLing140/StellarInsure/issues/361) [#362](https://github.com/ChaoLing140/StellarInsure/issues/362) [#358](https://github.com/ChaoLing140/StellarInsure/issues/358) [#355](https://github.com/ChaoLing140/StellarInsure/issues/355) [#361](https://github.com/ChaoLing140/StellarInsure/issues/361) [#362](https://github.com/ChaoLing140/StellarInsure/issues/362)
+
 # [1.27.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.26.3...v1.27.0) (2026-05-29)
 
 
