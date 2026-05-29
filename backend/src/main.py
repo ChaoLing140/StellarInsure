@@ -3,6 +3,7 @@ import logging
 import time
 import json
 import uuid
+from datetime import datetime
 from sqlalchemy import text
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -177,12 +178,24 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    # Format validation errors in a structured way
+    errors = exc.errors()
+    formatted_errors = []
+    for error in errors:
+        formatted_errors.append({
+            "field": ".".join(str(loc) for loc in error["loc"]),
+            "message": error["msg"],
+            "type": error["type"]
+        })
+    
     return JSONResponse(
         status_code=422,
-        content=ErrorResponse(
-            error_code="VAL_001",
-            detail=str(exc.errors())
-        ).model_dump(mode="json")
+        content={
+            "error_code": "VAL_001",
+            "detail": "Request validation failed",
+            "errors": formatted_errors,
+            "timestamp": datetime.utcnow().isoformat()
+        }
     )
 
 @app.get("/", summary="Root endpoint", description="Returns a simple welcome message.")

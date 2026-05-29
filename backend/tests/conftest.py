@@ -130,6 +130,12 @@ def admin_headers(admin_user):
 
 
 @pytest.fixture()
+def authenticated_user(auth_user, auth_headers):
+    """Fixture that returns both user and headers as a tuple"""
+    return auth_user, auth_headers
+
+
+@pytest.fixture()
 def refresh_token(auth_user):
     return create_refresh_token(
         {"sub": str(auth_user.id), "stellar_address": auth_user.stellar_address}
