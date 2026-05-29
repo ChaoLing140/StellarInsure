@@ -8,7 +8,7 @@
   --color-sand-300: #e6ddce;
   --color-ink-900: #102542;
   --color-ink-700: #334255;
-  --color-ink-500: #556274;
+  --color-ink-500: #4a5563;
   --color-ink-100: #d7dde6;
   --color-sky-500: #1f7a8c;
   --color-sky-100: #dbeef2;
@@ -128,7 +128,7 @@
   --surface-wash: rgba(19, 30, 46, 0.85);
   --card-border: rgba(255, 255, 255, 0.09);
   --text: #dce5f0;
-  --text-muted: #7d95b0;
+  --text-muted: #8fa6be;
   /* Accent — lightened to meet WCAG AA 4.5:1 on dark surfaces (#323) */
   --accent: #f0935f;
   --accent-strong: #f7b899;

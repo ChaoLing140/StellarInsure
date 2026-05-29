@@ -336,7 +336,7 @@ export default function CreatePolicyPageClient() {
   const [isEstimating, setIsEstimating] = useState(false);
   const [estimationError, setEstimationError] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
-  const { isConnected, message: walletMessage, status: walletStatus } = useWallet();
+  const { isConnected, message: walletMessage, status: walletStatus, connect } = useWallet();
 
   function updateDraft<K extends keyof PolicyDraft>(field: K, value: PolicyDraft[K]) {
     setDraft({ ...draft, [field]: value });
@@ -753,15 +753,44 @@ export default function CreatePolicyPageClient() {
           </div>
 
           {!isWalletReady ? (
-            <p className="form-status" role="status" aria-live="polite">
-              {walletStatus === "unsupported"
-                ? "Wallet not supported in this browser. Install a compatible wallet extension to continue."
-                : walletStatus === "checking"
-                  ? "Checking wallet availability..."
-                  : walletStatus === "connecting"
-                    ? "Complete wallet connection to submit this policy."
-                    : walletMessage}
-            </p>
+            <div className="wallet-readiness-alert" role="alert" aria-live="polite">
+              <div className="wallet-readiness-alert__icon" aria-hidden="true">
+                <Icon name="alert-circle" size="md" tone="warning" />
+              </div>
+              <div className="wallet-readiness-alert__content">
+                <h3 className="wallet-readiness-alert__title">
+                  {walletStatus === "unsupported"
+                    ? "Wallet Not Supported"
+                    : walletStatus === "checking"
+                      ? "Checking Wallet Availability"
+                      : walletStatus === "connecting"
+                        ? "Connecting Wallet"
+                        : "Wallet Connection Required"}
+                </h3>
+                <p className="wallet-readiness-alert__message">
+                  {walletStatus === "unsupported"
+                    ? "Install a compatible wallet extension (Freighter, Lobstr, or xBull) to continue."
+                    : walletStatus === "checking"
+                      ? "Verifying wallet availability..."
+                      : walletStatus === "connecting"
+                        ? "Please approve the connection request in your wallet extension."
+                        : walletMessage || "Connect your wallet to sign and submit this policy."}
+                </p>
+                {walletStatus === "disconnected" || walletStatus === "error" ? (
+                  <div className="wallet-readiness-alert__actions">
+                    <button
+                      className="cta-primary cta-primary--small"
+                      type="button"
+                      onClick={connect}
+                      aria-label="Connect wallet to continue"
+                    >
+                      <Icon name="wallet" size="sm" aria-hidden="true" />
+                      Connect Wallet
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           ) : null}
         </section>
       )}

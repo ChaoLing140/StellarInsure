@@ -166,6 +166,16 @@ const en = {
       found: 'transactions found',
       updating: 'Updating results...',
       upToDate: 'Filters are up to date.',
+      types: {
+        premium: 'Premium',
+        payout: 'Payout',
+        refund: 'Refund',
+      },
+      statuses: {
+        successful: 'Successful',
+        pending: 'Pending',
+        failed: 'Failed',
+      },
     },
     table: {
       date: 'Date',
@@ -179,6 +189,26 @@ const en = {
       title: 'No transactions found',
       message:
         "No transactions match your current filters, or you haven't made any transactions yet.",
+      clearFilters: 'Clear filters',
+      createFirstPolicy: 'Create your first policy',
+      viewPolicies: 'View policies',
+    },
+    details: {
+      transactionId: 'Transaction ID',
+      fullHash: 'Full Hash',
+      policyId: 'Policy ID',
+      policySnapshot: 'policy snapshot',
+      claimId: 'Claim ID',
+      explorer: 'Explorer',
+      viewOnStellarExpert: 'View on Stellar Expert',
+      retryPrompt: 'This transaction failed. Would you like to retry it?',
+      startRetry: 'Start Retry',
+    },
+    pagination: {
+      prev: 'Prev',
+      next: 'Next',
+      showing: 'Showing',
+      of: 'of',
     },
   },
   policyList: {

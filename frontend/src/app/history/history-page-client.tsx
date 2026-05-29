@@ -211,9 +211,9 @@ export default function TransactionHistoryPage() {
             onChange={handleTypeChange}
           >
             <option value="all">{t('history.filters.allTypes')}</option>
-            <option value="premium">Premium</option>
-            <option value="payout">Payout</option>
-            <option value="refund">Refund</option>
+            <option value="premium">{t('history.filters.types.premium')}</option>
+            <option value="payout">{t('history.filters.types.payout')}</option>
+            <option value="refund">{t('history.filters.types.refund')}</option>
           </select>
         </div>
 
@@ -228,9 +228,9 @@ export default function TransactionHistoryPage() {
             onChange={handleStatusChange}
           >
             <option value="all">{t('history.filters.allStatuses')}</option>
-            <option value="successful">Successful</option>
-            <option value="pending">Pending</option>
-            <option value="failed">Failed</option>
+            <option value="successful">{t('history.filters.statuses.successful')}</option>
+            <option value="pending">{t('history.filters.statuses.pending')}</option>
+            <option value="failed">{t('history.filters.statuses.failed')}</option>
           </select>
         </div>
 
@@ -329,16 +329,16 @@ export default function TransactionHistoryPage() {
                 }}
               >
                 <Icon name="refresh" size="sm" aria-hidden="true" />
-                Clear filters
+                {t('history.empty.clearFilters')}
               </button>
             ) : (
               <Link href="/create" className="cta-primary">
                 <Icon name="plus" size="sm" aria-hidden="true" />
-                Create your first policy
+                {t('history.empty.createFirstPolicy')}
               </Link>
             )}
             <Link href="/policies" className="cta-secondary">
-              View policies
+              {t('history.empty.viewPolicies')}
             </Link>
           </div>
         </div>
@@ -421,11 +421,6 @@ export default function TransactionHistoryPage() {
                   <React.Fragment key={tx.id}>
                     <tr
                       className={`tx-row ${expandedId === tx.id ? 'tx-row--expanded' : ''}`}
-                      onClick={() =>
-                        setExpandedId(expandedId === tx.id ? null : tx.id)
-                      }
-                      style={{ cursor: 'pointer' }}
-                      aria-expanded={expandedId === tx.id}
                     >
                       <td data-label="Date">{formatDate(tx.created_at)}</td>
                       <td data-label="Type">
@@ -446,7 +441,6 @@ export default function TransactionHistoryPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="tx-hash-link"
-                          onClick={(e) => e.stopPropagation()}
                           aria-label={`View transaction ${shortenHash(tx.transaction_hash)} on Stellar Explorer`}
                         >
                           <span>{shortenHash(tx.transaction_hash)}</span>
@@ -462,10 +456,15 @@ export default function TransactionHistoryPage() {
                       <td data-label="Details">
                         <button
                           className="tx-expand-btn"
+                          aria-expanded={expandedId === tx.id}
+                          aria-controls={`tx-detail-${tx.id}`}
                           aria-label={`${expandedId === tx.id ? 'Collapse' : 'Expand'} transaction ${tx.id} details`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setExpandedId(expandedId === tx.id ? null : tx.id);
+                          onClick={() => setExpandedId(expandedId === tx.id ? null : tx.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setExpandedId(expandedId === tx.id ? null : tx.id);
+                            }
                           }}
                         >
                           <Icon
@@ -483,6 +482,8 @@ export default function TransactionHistoryPage() {
                     {expandedId === tx.id && (
                       <tr
                         className="tx-detail-row"
+                        id={`tx-detail-${tx.id}`}
+                        role="region"
                         aria-label="Transaction detail"
                       >
                         <td colSpan={6}>
@@ -514,8 +515,7 @@ export default function TransactionHistoryPage() {
                                     />
                                     <div>
                                       <p className="tx-detail-retry-message">
-                                        This transaction failed. Would you like
-                                        to retry it?
+                                        {t('history.details.retryPrompt')}
                                       </p>
                                     </div>
                                   </div>
@@ -531,14 +531,14 @@ export default function TransactionHistoryPage() {
                                       size="sm"
                                       aria-hidden="true"
                                     />
-                                    Start Retry
+                                    {t('history.details.startRetry')}
                                   </button>
                                 </div>
                               )}
                             <div className="tx-detail-grid">
                               <div>
                                 <span className="tx-detail-label">
-                                  Transaction ID
+                                  {t('history.details.transactionId')}
                                 </span>
                                 <span className="tx-detail-value">
                                   #{tx.id}
@@ -546,7 +546,7 @@ export default function TransactionHistoryPage() {
                               </div>
                               <div>
                                 <span className="tx-detail-label">
-                                  Full Hash
+                                  {t('history.details.fullHash')}
                                 </span>
                                 <span className="tx-detail-value tx-detail-hash">
                                   {tx.transaction_hash}
@@ -555,7 +555,7 @@ export default function TransactionHistoryPage() {
                               {tx.policy_id && (
                                 <div>
                                   <span className="tx-detail-label">
-                                    Policy ID
+                                    {t('history.details.policyId')}
                                   </span>
                                   <Link
                                     className="tx-detail-link"
@@ -564,14 +564,14 @@ export default function TransactionHistoryPage() {
                                       event: React.MouseEvent<HTMLAnchorElement>
                                     ) => event.stopPropagation()}
                                   >
-                                    #{tx.policy_id} policy snapshot
+                                    #{tx.policy_id} {t('history.details.policySnapshot')}
                                   </Link>
                                 </div>
                               )}
                               {tx.claim_id && (
                                 <div>
                                   <span className="tx-detail-label">
-                                    Claim ID
+                                    {t('history.details.claimId')}
                                   </span>
                                   <span className="tx-detail-value">
                                     #{tx.claim_id}
@@ -580,7 +580,7 @@ export default function TransactionHistoryPage() {
                               )}
                               <div>
                                 <span className="tx-detail-label">
-                                  Explorer
+                                  {t('history.details.explorer')}
                                 </span>
                                 <a
                                   href={`${STELLAR_EXPLORER_BASE}${tx.transaction_hash}`}
@@ -588,7 +588,7 @@ export default function TransactionHistoryPage() {
                                   rel="noopener noreferrer"
                                   className="tx-detail-link tx-detail-link--with-icon"
                                 >
-                                  <span>View on Stellar Expert</span>
+                                  <span>{t('history.details.viewOnStellarExpert')}</span>
                                   <Icon
                                     name="arrow-up-right"
                                     size="sm"
@@ -620,7 +620,7 @@ export default function TransactionHistoryPage() {
             disabled={page === 1}
             aria-label="Previous page"
           >
-            Prev
+            {t('history.pagination.prev')}
           </button>
 
           <div className="tx-page-numbers" role="list">
@@ -664,14 +664,14 @@ export default function TransactionHistoryPage() {
             disabled={page === totalPages}
             aria-label="Next page"
           >
-            Next
+            {t('history.pagination.next')}
           </button>
         </nav>
       )}
 
       <p className="tx-pagination-info" aria-live="polite">
-        Showing {Math.min((page - 1) * PER_PAGE + 1, total)}-
-        {Math.min(page * PER_PAGE, total)} of {total}
+        {t('history.pagination.showing')} {Math.min((page - 1) * PER_PAGE + 1, total)}-
+        {Math.min(page * PER_PAGE, total)} {t('history.pagination.of')} {total}
       </p>
     </main>
   );

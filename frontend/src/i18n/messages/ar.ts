@@ -158,7 +158,17 @@ const ar = {
       "allStatuses": "جميع الحالات",
       "found": "معاملات وجدت",
       "updating": "جارٍ تحديث النتائج...",
-      "upToDate": "المرشحات محدثة."
+      "upToDate": "المرشحات محدثة.",
+      "types": {
+        "premium": "قسط",
+        "payout": "دفع",
+        "refund": "استرداد",
+      },
+      "statuses": {
+        "successful": "ناجح",
+        "pending": "معلق",
+        "failed": "فشل",
+      },
     },
     "table": {
       "date": "التاريخ",
@@ -168,7 +178,30 @@ const ar = {
       "hash": "الهاش",
       "details": "التفاصيل"
     },
-    "empty": "لا توجد معاملات تطابق عوامل التصفية الخاصة بك."
+    "empty": {
+      "title": "لم يتم العثور على معاملات",
+      "message": "لا توجد معاملات تطابق عوامل التصفية الحالية، أو لم تقم بأي معاملات بعد.",
+      "clearFilters": "مسح المرشحات",
+      "createFirstPolicy": "إنشاء وثيقتك الأولى",
+      "viewPolicies": "عرض الوثائق",
+    },
+    "details": {
+      "transactionId": "معرف المعاملة",
+      "fullHash": "الهاش الكامل",
+      "policyId": "معرف الوثيقة",
+      "policySnapshot": "لقطة الوثيقة",
+      "claimId": "معرف المطالبة",
+      "explorer": "المستكشف",
+      "viewOnStellarExpert": "عرض على ستيلر إكسبيرت",
+      "retryPrompt": "فشلت هذه المعاملة. هل تريد إعادة المحاولة؟",
+      "startRetry": "بدء إعادة المحاولة",
+    },
+    "pagination": {
+      "prev": "السابق",
+      "next": "التالي",
+      "showing": "عرض",
+      "of": "من",
+    },
   },
   policyList: {
     "eyebrow": "وثائقي",
