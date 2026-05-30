@@ -39,6 +39,10 @@ yarn-error.log*
 *.db
 *.sqlite
 
+# Coverage
+**/.coverage
+**/coverage.xml
+
 # Python
 __pycache__/
 *.py[cod]
