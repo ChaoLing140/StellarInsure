@@ -184,6 +184,7 @@ class WebhookDelivery(Base):
     response_body = Column(Text, nullable=True)
     success = Column(Boolean, default=False, nullable=False)
     attempts = Column(Integer, default=0, nullable=False)
+    delivery_status = Column(String(32), default="pending", nullable=False)
     last_attempt_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
@@ -192,6 +193,7 @@ class WebhookDelivery(Base):
     def __init__(self, **kwargs):
         kwargs.setdefault("success", False)
         kwargs.setdefault("attempts", 0)
+        kwargs.setdefault("delivery_status", "pending")
         super().__init__(**kwargs)
 
     def __repr__(self):

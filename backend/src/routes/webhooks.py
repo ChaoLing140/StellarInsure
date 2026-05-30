@@ -16,6 +16,7 @@ from ..schemas import (
     WebhookUpdateRequest,
     WebhookResponse,
     WebhookDeliveryResponse,
+    WebhookDeliveryDetailResponse,
     WebhookDeliveryListResponse,
     MessageResponse,
 )
@@ -36,6 +37,39 @@ class WebhookDuplicateUrlError(StellarInsureError):
 class WebhookLimitExceededError(StellarInsureError):
     def __init__(self, detail: str = "Webhook limit reached for this user"):
         super().__init__(status.HTTP_429_TOO_MANY_REQUESTS, detail, "WEBHOOK_003")
+
+
+class WebhookDeliveryNotFoundError(StellarInsureError):
+    def __init__(self, detail: str = "Webhook delivery not found"):
+        super().__init__(status.HTTP_404_NOT_FOUND, detail, "WEBHOOK_004")
+
+
+def _format_delivery(delivery: WebhookDelivery) -> WebhookDeliveryResponse:
+    return WebhookDeliveryResponse(
+        id=delivery.id,
+        webhook_id=delivery.webhook_id,
+        event_type=delivery.event_type,
+        response_status=delivery.response_status,
+        success=delivery.success,
+        attempts=delivery.attempts,
+        delivery_status=delivery.delivery_status,
+        created_at=delivery.created_at,
+    )
+
+
+def _format_delivery_detail(delivery: WebhookDelivery) -> WebhookDeliveryDetailResponse:
+    return WebhookDeliveryDetailResponse(
+        id=delivery.id,
+        webhook_id=delivery.webhook_id,
+        event_type=delivery.event_type,
+        response_status=delivery.response_status,
+        success=delivery.success,
+        attempts=delivery.attempts,
+        delivery_status=delivery.delivery_status,
+        created_at=delivery.created_at,
+        response_body=delivery.response_body,
+        last_attempt_at=delivery.last_attempt_at,
+    )
 
 
 def _format_webhook(webhook: Webhook) -> WebhookResponse:
@@ -117,6 +151,37 @@ async def list_webhooks(
         .all()
     )
     return [_format_webhook(w) for w in webhooks]
+
+
+@router.get(
+    "/deliveries/{delivery_id}",
+    response_model=WebhookDeliveryDetailResponse,
+    summary="Get webhook delivery status",
+    description="Returns the current delivery state for operator review, including retry and dead-letter status.",
+    responses={
+        200: {"description": "Delivery status"},
+        404: {"description": "Delivery not found"},
+        401: {"description": "Not authenticated"},
+    },
+)
+async def get_webhook_delivery_status(
+    delivery_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    delivery = (
+        db.query(WebhookDelivery)
+        .join(Webhook, Webhook.id == WebhookDelivery.webhook_id)
+        .filter(
+            WebhookDelivery.id == delivery_id,
+            Webhook.user_id == current_user.id,
+        )
+        .first()
+    )
+    if delivery is None:
+        raise WebhookDeliveryNotFoundError()
+
+    return _format_delivery_detail(delivery)
 
 
 @router.get(
@@ -267,18 +332,7 @@ async def list_webhook_deliveries(
     )
 
     return WebhookDeliveryListResponse(
-        deliveries=[
-            WebhookDeliveryResponse(
-                id=d.id,
-                webhook_id=d.webhook_id,
-                event_type=d.event_type,
-                response_status=d.response_status,
-                success=d.success,
-                attempts=d.attempts,
-                created_at=d.created_at,
-            )
-            for d in deliveries
-        ],
+        deliveries=[_format_delivery(d) for d in deliveries],
         total=total,
         page=page,
         per_page=per_page,

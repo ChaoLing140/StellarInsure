@@ -99,12 +99,15 @@ describe("CreatePolicyPageClient", () => {
     localStorage.setItem(
       "stellarinsure-policy-draft",
       JSON.stringify({
-        policyType: "weather",
-        coverageAmount: "5000",
-        premium: "120",
-        triggerCondition: "rainfall > 50",
-        duration: "90",
-        oracleProvider: "weatherlink-prime",
+        data: {
+          policyType: "weather",
+          coverageAmount: "5000",
+          premium: "120",
+          triggerCondition: "rainfall > 50",
+          duration: "90",
+          oracleProvider: "weatherlink-prime",
+        },
+        updatedAt: Date.now(),
       }),
     );
     render(<CreatePolicyPageClient />);
@@ -130,12 +133,15 @@ describe("CreatePolicyPageClient", () => {
     localStorage.setItem(
       "stellarinsure-policy-draft",
       JSON.stringify({
-        policyType: "weather",
-        coverageAmount: "5000",
-        premium: "120",
-        triggerCondition: "temperature > 25 AND rainfall > 50",
-        duration: "90",
-        oracleProvider: "weatherlink-prime",
+        data: {
+          policyType: "weather",
+          coverageAmount: "5000",
+          premium: "120",
+          triggerCondition: "temperature > 25 AND rainfall > 50",
+          duration: "90",
+          oracleProvider: "weatherlink-prime",
+        },
+        updatedAt: Date.now(),
       }),
     );
     render(<CreatePolicyPageClient />);
