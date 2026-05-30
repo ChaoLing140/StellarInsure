@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: ghcr.io/chaoLing140/stellarinsure-backend:latest
+          image: ghcr.io/chaoLing140/stellarinsure-backend:${BACKEND_IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000
