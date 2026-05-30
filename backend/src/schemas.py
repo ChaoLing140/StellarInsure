@@ -366,10 +366,16 @@ class WebhookDeliveryResponse(BaseModel):
     response_status: Optional[int] = Field(None, description="HTTP response status code")
     success: bool = Field(..., description="Whether delivery was successful")
     attempts: int = Field(..., description="Number of delivery attempts")
+    delivery_status: str = Field(..., description="Delivery lifecycle status")
     created_at: datetime = Field(..., description="Delivery creation timestamp")
 
     class Config:
         from_attributes = True
+
+
+class WebhookDeliveryDetailResponse(WebhookDeliveryResponse):
+    response_body: Optional[str] = Field(None, description="Last response body or error message")
+    last_attempt_at: Optional[datetime] = Field(None, description="Timestamp of the last delivery attempt")
 
 
 class WebhookDeliveryListResponse(BaseModel):

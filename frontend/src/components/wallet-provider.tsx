@@ -61,6 +61,24 @@ function parseAddress(result: unknown): string | null {
   return null;
 }
 
+export function mapWalletConnectionError(error: unknown): string {
+  const rawMessage = error instanceof Error ? error.message.toLowerCase() : "";
+
+  if (rawMessage.includes("user rejected") || rawMessage.includes("denied") || rawMessage.includes("cancel")) {
+    return "The wallet request was declined. You can try connecting again when you are ready.";
+  }
+
+  if (rawMessage.includes("not installed") || rawMessage.includes("no wallet")) {
+    return "No supported wallet was found. Install Freighter, Lobstr, or xBull, then try again.";
+  }
+
+  if (rawMessage.includes("locked")) {
+    return "Your wallet is locked. Unlock it in the extension, then try again.";
+  }
+
+  return "We could not connect your wallet. Please try again.";
+}
+
 async function requestWalletAddress(api: FreighterLikeApi): Promise<string> {
   if (typeof api.requestAccess === "function") {
     const requestAccessResult = await api.requestAccess();
@@ -130,11 +148,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       window.localStorage.setItem(WALLET_STORAGE_KEY, nextAddress);
     } catch (error) {
       setStatus("error");
-      setMessage(
-        error instanceof Error
-          ? error.message
-          : "Wallet connection failed. Please try again.",
-      );
+      setMessage(mapWalletConnectionError(error));
     }
   }
 

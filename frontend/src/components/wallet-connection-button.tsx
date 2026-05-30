@@ -9,6 +9,7 @@ export function WalletConnectionButton() {
   const { account, connect, disconnect, isConnected, message, status } = useWallet();
 
   const isBusy = status === "checking" || status === "connecting";
+  const showRetry = status === "error" || status === "unsupported";
 
   const buttonLabel =
     status === "checking"
@@ -40,7 +41,7 @@ export function WalletConnectionButton() {
   }
 
   return (
-    <div className="wallet-connection" role="status" aria-live="polite">
+    <div className="wallet-connection">
       <button
         aria-busy={isBusy}
         aria-label={buttonLabel}
@@ -52,7 +53,31 @@ export function WalletConnectionButton() {
         <Icon name="wallet" size="sm" tone={isConnected ? "success" : "accent"} />
         <span>{buttonLabel}</span>
       </button>
-      <p className={`wallet-connection__message ${messageToneClass}`}>{message}</p>
+
+      {showRetry ? (
+        <div
+          className="wallet-connection__error"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+        >
+          <p className={`wallet-connection__message ${messageToneClass}`}>{message}</p>
+          <button
+            className="cta-secondary wallet-connection__retry"
+            type="button"
+            onClick={() => {
+              void connect();
+            }}
+            aria-label="Retry wallet connection"
+          >
+            Try again
+          </button>
+        </div>
+      ) : (
+        <p className={`wallet-connection__message ${messageToneClass}`} role="status" aria-live="polite">
+          {message}
+        </p>
+      )}
     </div>
   );
 }

@@ -17,7 +17,7 @@ import {
   type TimelineStep,
 } from "@/components/transaction-timeline";
 import { useWallet } from "@/components/wallet-provider";
-import { useAutosave } from "@/hooks/use-autosave";
+import { usePolicyDraftAutosave } from "@/hooks/use-autosave";
 import { useAppTranslation } from "@/i18n/provider";
 import { TriggerConditionBuilder, type ConditionRule, type Operator } from "@/components/trigger-condition-builder";
 import { PremiumEstimate, type PremiumBreakdown } from "@/components/premium-estimate";
@@ -332,10 +332,14 @@ function SuccessReceipt({
 
 export default function CreatePolicyPageClient() {
   const { t } = useAppTranslation();
-  const [draft, setDraft, clearDraft, isSaved] = useAutosave<PolicyDraft>(
-    "stellarinsure-policy-draft",
-    INITIAL_DRAFT,
-  );
+  const {
+    state: draft,
+    setState: setDraft,
+    clear: clearDraft,
+    restoreCleared,
+    hasClearedBackup,
+    isSaved,
+  } = usePolicyDraftAutosave<PolicyDraft>("stellarinsure-policy-draft", INITIAL_DRAFT);
   const [step, setStep] = useState<CreateStep>(() => {
     if (draft.policyType && draft.coverageAmount && draft.triggerCondition) return 2;
     if (draft.policyType) return 1;
@@ -561,7 +565,30 @@ export default function CreatePolicyPageClient() {
 
       <StepIndicator current={step} />
 
-      {step === 1 && <ValidationSummary errors={validationErrors} />}
+      {hasClearedBackup ? (
+        <div className="draft-undo-banner" role="status" aria-live="polite">
+          <p>Draft discarded.</p>
+          <button
+            className="cta-secondary cta-secondary--small"
+            type="button"
+            onClick={() => {
+              const restored = restoreCleared();
+              if (!restored) {
+                return;
+              }
+              if (restored.policyType && restored.coverageAmount && restored.triggerCondition) {
+                setStep(2);
+              } else if (restored.policyType) {
+                setStep(1);
+              } else {
+                setStep(0);
+              }
+            }}
+          >
+            Undo discard
+          </button>
+        </div>
+      ) : null}
 
       {step === 0 && (
         <section className="create-section motion-panel" aria-labelledby="step-type-title">

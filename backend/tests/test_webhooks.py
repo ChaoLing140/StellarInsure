@@ -173,8 +173,14 @@ class TestWebhookRoutes:
         response = client.get(f"/webhooks/{webhook.id}/deliveries", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
-        assert len(data) >= 1
+        assert data["total"] >= 1
+        assert len(data["deliveries"]) >= 1
+
+        status_response = client.get(f"/webhooks/deliveries/{delivery.id}", headers=auth_headers)
+        assert status_response.status_code == 200
+        status_data = status_response.json()
+        assert status_data["id"] == delivery.id
+        assert status_data["delivery_status"] == "pending"
 
     def test_webhooks_require_authentication(self, client):
         response = client.get("/webhooks/")
@@ -183,6 +189,19 @@ class TestWebhookRoutes:
 
 class TestWebhookService:
     """Test webhook delivery service logic."""
+
+    def test_classify_dead_letter_for_permanent_client_errors(self):
+        from src.services.webhook_service import (
+            DELIVERY_STATUS_DEAD_LETTER,
+            DELIVERY_STATUS_FAILED,
+            classify_delivery_failure,
+        )
+
+        assert classify_delivery_failure(response_status=404) == DELIVERY_STATUS_DEAD_LETTER
+        assert classify_delivery_failure(response_status=401) == DELIVERY_STATUS_DEAD_LETTER
+        assert classify_delivery_failure(response_status=500) == DELIVERY_STATUS_FAILED
+        assert classify_delivery_failure(response_status=429) == DELIVERY_STATUS_FAILED
+        assert classify_delivery_failure(error=RuntimeError("timeout")) == DELIVERY_STATUS_FAILED
 
     def test_generate_signature(self):
         from src.services.webhook_service import _generate_signature
@@ -272,7 +291,41 @@ class TestWebhookService:
         )
         assert len(deliveries) == 1
         assert deliveries[0].success is False
-        assert deliveries[0].attempts == 3  # max retries
+        assert deliveries[0].attempts == 3
+        assert deliveries[0].delivery_status == "dead_letter"
+
+    @patch("src.services.webhook_service.httpx.Client")
+    def test_dispatch_permanent_failure_records_dead_letter(self, mock_client_cls, db_session, auth_user):
+        mock_response = MagicMock()
+        mock_response.status_code = 404
+        mock_response.text = "Not Found"
+        mock_client_instance = MagicMock()
+        mock_client_instance.__enter__ = MagicMock(return_value=mock_client_instance)
+        mock_client_instance.__exit__ = MagicMock(return_value=False)
+        mock_client_instance.post.return_value = mock_response
+        mock_client_cls.return_value = mock_client_instance
+
+        webhook = Webhook(
+            user_id=auth_user.id,
+            url="https://example.com/missing-hook",
+            secret="test-secret",
+            event_types="claim.created",
+        )
+        db_session.add(webhook)
+        db_session.commit()
+
+        from src.services.webhook_service import dispatch_webhook_event
+        deliveries = dispatch_webhook_event(
+            db=db_session,
+            user_id=auth_user.id,
+            event_type="claim.created",
+            payload={"claim_id": 1},
+        )
+
+        assert len(deliveries) == 1
+        assert deliveries[0].success is False
+        assert deliveries[0].attempts == 1
+        assert deliveries[0].delivery_status == "dead_letter"
 
     @patch("src.services.webhook_service.httpx.Client")
     def test_retry_uses_exponential_backoff(self, mock_client_cls, db_session, auth_user):

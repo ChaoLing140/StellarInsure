@@ -448,19 +448,33 @@ The API uses standard HTTP status codes:
 
 ## Rate Limiting
 
-The API implements rate limiting to prevent abuse:
+The API applies IP-based throttling through slowapi. Default limits are configured with `RATE_LIMIT_DEFAULT` and `RATE_LIMIT_AUTH`.
 
-- **Anonymous requests:** 100 requests per hour
-- **Authenticated requests:** 1000 requests per hour
-- **Webhook deliveries:** 10 retries with exponential backoff
+When a client exceeds a limit, the API returns `429 Too Many Requests` with a JSON body:
 
-Rate limit headers are included in responses:
+```json
+{
+  "error_code": "RATE_001",
+  "detail": "Rate limit exceeded: 60 per 1 minute",
+  "retry_after": 60
+}
+```
+
+Every throttled response includes the same retry contract headers:
 
 ```
-X-RateLimit-Limit: 1000
-X-RateLimit-Remaining: 999
+Retry-After: 60
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 0
 X-RateLimit-Reset: 1714208400
 ```
+
+- `Retry-After` is the number of seconds to wait before retrying.
+- `X-RateLimit-Limit` is the maximum number of requests allowed in the current window.
+- `X-RateLimit-Remaining` is the number of requests left in the current window.
+- `X-RateLimit-Reset` is a Unix timestamp for when the current window resets.
+
+Clients should read `Retry-After` or `retry_after` from the response body and wait at least that long before retrying. Non-throttled responses may also include the `X-RateLimit-*` headers when rate limiting metadata is available.
 
 ## Pagination
 

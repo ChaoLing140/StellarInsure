@@ -52,11 +52,14 @@ describe("CreatePolicyPage", () => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        policyType: "weather",
-        coverageAmount: "5000",
-        premium: "",
-        triggerCondition: "Rainfall below threshold.",
-        duration: "",
+        data: {
+          policyType: "weather",
+          coverageAmount: "5000",
+          premium: "",
+          triggerCondition: "Rainfall below threshold.",
+          duration: "",
+        },
+        updatedAt: Date.now(),
       }),
     );
 
@@ -74,11 +77,14 @@ describe("CreatePolicyPage", () => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
-        policyType: "weather",
-        coverageAmount: "abc",
-        premium: "200",
-        triggerCondition: "Rainfall below threshold.",
-        duration: "90",
+        data: {
+          policyType: "weather",
+          coverageAmount: "abc",
+          premium: "200",
+          triggerCondition: "Rainfall below threshold.",
+          duration: "90",
+        },
+        updatedAt: Date.now(),
       }),
     );
 
@@ -90,6 +96,41 @@ describe("CreatePolicyPage", () => {
 
     expect(screen.getByRole("heading", { name: /review summary could not be prepared/i })).toBeInTheDocument();
     expect(screen.getByText(/fix the highlighted policy values/i)).toBeInTheDocument();
+  });
+
+  it("recovers draft input after a simulated reload", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        data: {
+          policyType: "weather",
+          coverageAmount: "5000",
+          premium: "200",
+          triggerCondition: "Rainfall below threshold.",
+          duration: "90",
+          oracleProvider: "weatherlink-prime",
+        },
+        updatedAt: Date.now(),
+      }),
+    );
+
+    const firstRender = render(<CreatePolicyPage />);
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+
+    expect(screen.getByRole("heading", { name: /review your policy/i })).toBeInTheDocument();
+    firstRender.unmount();
+
+    render(<CreatePolicyPage />);
+
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+
+    expect(screen.getByRole("heading", { name: /review your policy/i })).toBeInTheDocument();
+    expect(screen.getByText(/5000 xlm/i)).toBeInTheDocument();
   });
 });
 
