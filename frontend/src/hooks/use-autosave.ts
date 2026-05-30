@@ -53,6 +53,7 @@ export function useAutosave<T>(key: string, initial: T): [T, (next: T) => void, 
 export function usePolicyDraftAutosave<T>(key: string, initial: T): AutosaveControls<T> {
   const backupKey = `${key}-backup`;
   const editedAtRef = useRef(0);
+  const clearedAtRef = useRef<number | null>(null);
 
   const [state, setStateInternal] = useState<T>(() => {
     const stored = readStoredDraft<T>(key);
@@ -139,6 +140,7 @@ export function usePolicyDraftAutosave<T>(key: string, initial: T): AutosaveCont
   }, [key]);
 
   const clear = useCallback(() => {
+    const clearedAt = Date.now();
     try {
       const current = readStoredDraft<T>(key);
       if (current) {
@@ -149,7 +151,8 @@ export function usePolicyDraftAutosave<T>(key: string, initial: T): AutosaveCont
       // Ignore backup failures.
     }
 
-    editedAtRef.current = Date.now();
+    clearedAtRef.current = clearedAt;
+    editedAtRef.current = clearedAt;
     setStateInternal(initial);
     setIsSaved(true);
 
@@ -174,11 +177,16 @@ export function usePolicyDraftAutosave<T>(key: string, initial: T): AutosaveCont
       const backup = JSON.parse(backupRaw) as StoredDraft<T>;
       const restoredAt = backup.updatedAt ?? Date.now();
 
-      if (restoredAt <= editedAtRef.current) {
+      if (clearedAtRef.current === null && restoredAt <= editedAtRef.current) {
+        return null;
+      }
+
+      if (clearedAtRef.current !== null && editedAtRef.current > clearedAtRef.current) {
         return null;
       }
 
       editedAtRef.current = restoredAt;
+      clearedAtRef.current = null;
       setStateInternal(backup.data);
       writeStoredDraft(key, backup.data, restoredAt);
       localStorage.removeItem(backupKey);
