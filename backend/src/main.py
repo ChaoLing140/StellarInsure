@@ -21,6 +21,7 @@ from .errors import StellarInsureError
 from .schemas import ErrorResponse
 from .database import engine
 from .rate_limiter import setup_rate_limiting
+from .cache import get_redis_client
 
 settings = get_settings()
 
@@ -153,6 +154,24 @@ async def health():
     except Exception as e:
         health_status["status"] = "unhealthy"
         health_status["dependencies"]["database"] = f"error: {str(e)}"
+    
+    # Check Redis when enabled
+    if settings.redis_enabled:
+        try:
+            redis_client = get_redis_client()
+            if redis_client is not None:
+                redis_client.ping()
+                health_status["dependencies"]["redis"] = "connected"
+            else:
+                health_status["dependencies"]["redis"] = "unhealthy"
+                if health_status["status"] != "unhealthy":
+                    health_status["status"] = "degraded"
+        except Exception as e:
+            health_status["dependencies"]["redis"] = f"error: {str(e)}"
+            if health_status["status"] != "unhealthy":
+                health_status["status"] = "degraded"
+    else:
+        health_status["dependencies"]["redis"] = "disabled"
         
     return health_status
 

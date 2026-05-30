@@ -17,7 +17,8 @@ from ..errors import (
     PolicyNotFoundError,
     PolicyNotEligibleForClaimError,
     InsufficientCoverageError,
-    ClaimNotFoundError
+    ClaimNotFoundError,
+    DuplicatePendingClaimError,
 )
 from ..services.storage_service import storage_service
 from ..services.webhook_service import dispatch_webhook_event
@@ -85,6 +86,9 @@ async def create_claim(
     if claim_data.claim_amount > float(policy.remaining_coverage()):
         raise InsufficientCoverageError()
 
+    if policy.status == PolicyStatus.claim_pending:
+        raise DuplicatePendingClaimError()
+
     claim = Claim(
         policy_id=claim_data.policy_id,
         claimant_id=current_user.id,
@@ -150,6 +154,9 @@ async def create_claim_with_file(
 
     if claim_amount > float(policy.remaining_coverage()):
         raise InsufficientCoverageError()
+
+    if policy.status == PolicyStatus.claim_pending:
+        raise DuplicatePendingClaimError()
 
     # Use StorageService for upload
     file_path = await storage_service.upload_file(file, folder="claim_proofs")

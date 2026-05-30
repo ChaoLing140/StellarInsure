@@ -60,6 +60,10 @@ class PolicyNotEligibleForClaimError(StellarInsureError):
     def __init__(self, detail: str = "Policy is not eligible for claims"):
         super().__init__(status.HTTP_400_BAD_REQUEST, detail, "CLAIM_002")
 
+class DuplicatePendingClaimError(StellarInsureError):
+    def __init__(self, detail: str = "A pending claim already exists for this policy"):
+        super().__init__(status.HTTP_409_CONFLICT, detail, "CLAIM_003")
+
 # Storage Errors (STORAGE_xxx)
 class FileNotFoundStorageError(StellarInsureError):
     def __init__(self, detail: str = "File not found"):

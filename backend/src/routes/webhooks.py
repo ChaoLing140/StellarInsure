@@ -27,6 +27,11 @@ class WebhookNotFoundError(StellarInsureError):
         super().__init__(status.HTTP_404_NOT_FOUND, detail, "WEBHOOK_001")
 
 
+class WebhookDuplicateUrlError(StellarInsureError):
+    def __init__(self, detail: str = "An active webhook with this URL already exists"):
+        super().__init__(status.HTTP_409_CONFLICT, detail, "WEBHOOK_002")
+
+
 def _format_webhook(webhook: Webhook) -> WebhookResponse:
     return WebhookResponse(
         id=webhook.id,
@@ -55,6 +60,14 @@ async def create_webhook(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db),
 ):
+    existing = (
+        db.query(Webhook)
+        .filter(Webhook.user_id == current_user.id, Webhook.url == body.url, Webhook.is_active == True)
+        .first()
+    )
+    if existing is not None:
+        raise WebhookDuplicateUrlError()
+
     webhook = Webhook(
         user_id=current_user.id,
         url=body.url,
@@ -143,6 +156,18 @@ async def update_webhook(
         raise WebhookNotFoundError()
 
     if body.url is not None:
+        duplicate = (
+            db.query(Webhook)
+            .filter(
+                Webhook.user_id == current_user.id,
+                Webhook.url == body.url,
+                Webhook.is_active == True,
+                Webhook.id != webhook.id,
+            )
+            .first()
+        )
+        if duplicate is not None:
+            raise WebhookDuplicateUrlError()
         webhook.url = body.url
     if body.event_types is not None:
         webhook.event_types = ",".join(body.event_types)
