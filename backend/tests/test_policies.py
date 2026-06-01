@@ -112,3 +112,76 @@ def test_policy_routes_require_authentication(client):
     response = client.get("/policies/")
 
     assert response.status_code == 403
+
+
+def test_get_user_policies_filter_by_account_own_address(
+    client, auth_headers, auth_user, wallet_address, policy_factory
+):
+    """Filtering by the authenticated user's own stellar_address returns their policies."""
+    policy_factory(auth_user, policy_type=PolicyType.weather)
+    policy_factory(auth_user, policy_type=PolicyType.flight)
+
+    response = client.get(
+        f"/policies/?account={wallet_address}",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 2
+
+
+def test_get_user_policies_filter_by_account_other_address_returns_empty(
+    client, auth_headers, auth_user, policy_factory, second_wallet_address
+):
+    """Filtering by another user's stellar_address returns empty results (not their policies)."""
+    policy_factory(auth_user)
+
+    response = client.get(
+        f"/policies/?account={second_wallet_address}",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 0
+    assert data["policies"] == []
+
+
+def test_get_user_policies_pagination_metadata(
+    client, auth_headers, auth_user, policy_factory
+):
+    """Response includes correct pagination metadata."""
+    for _ in range(5):
+        policy_factory(auth_user)
+
+    response = client.get(
+        "/policies/?page=1&per_page=2",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["page"] == 1
+    assert data["per_page"] == 2
+    assert data["total"] == 5
+    assert data["total_pages"] == 3
+    assert data["has_next"] is True
+    assert len(data["policies"]) == 2
+
+
+def test_get_user_policies_last_page_has_next_false(
+    client, auth_headers, auth_user, policy_factory
+):
+    """has_next is False on the last page."""
+    for _ in range(3):
+        policy_factory(auth_user)
+
+    response = client.get(
+        "/policies/?page=2&per_page=2",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["has_next"] is False

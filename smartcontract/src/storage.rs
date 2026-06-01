@@ -489,6 +489,24 @@ pub fn get_oracle_types(env: &Env) -> Vec<Symbol> {
         .unwrap_or(Vec::new(env))
 }
 
+// ── Issue #438 — Oracle quorum threshold ─────────────────────────────────────
+
+/// Set the minimum number of oracle confirmations required for price-dependent actions.
+/// `threshold` must be >= 1.
+pub fn set_oracle_quorum_threshold(env: &Env, threshold: u32) {
+    env.storage()
+        .instance()
+        .set(&DataKey::OracleQuorumThreshold, &threshold);
+}
+
+/// Get the oracle quorum threshold. Defaults to 1 if not explicitly set.
+pub fn get_oracle_quorum_threshold(env: &Env) -> u32 {
+    env.storage()
+        .instance()
+        .get(&DataKey::OracleQuorumThreshold)
+        .unwrap_or(1)
+}
+
 /// Remove an oracle address registration
 pub fn remove_oracle_address(env: &Env, oracle_type: &Symbol) {
     env.storage()

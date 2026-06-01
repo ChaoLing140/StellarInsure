@@ -100,7 +100,7 @@ async def create_policy(
     "/", 
     response_model=PolicyListResponse,
     summary="List user policies",
-    description="Returns a paginated list of insurance policies belonging to the authenticated user, with optional filtering by status and type.",
+    description="Returns a paginated list of insurance policies belonging to the authenticated user, with optional filtering by status, type, and account (stellar_address).",
     responses={
         200: {"description": "Paginated list of policies"},
         401: {"description": "Not authenticated"},
@@ -111,12 +111,14 @@ async def get_user_policies(
     per_page: int = Query(10, ge=1, le=100, description="Items per page"),
     status: Optional[PolicyStatus] = Query(None, description="Filter by status"),
     policy_type: Optional[PolicyType] = Query(None, description="Filter by type"),
+    account: Optional[str] = Query(None, min_length=56, max_length=56, description="Filter by policyholder Stellar address"),
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
     status_val = status.value if status else "all"
     type_val = policy_type.value if policy_type else "all"
-    cache_key = f"policies:user:{current_user.id}:{status_val}:{type_val}:{page}:{per_page}"
+    account_val = account or "all"
+    cache_key = f"policies:user:{current_user.id}:{status_val}:{type_val}:{account_val}:{page}:{per_page}"
     
     cached = cache_get(cache_key)
     if cached is not None:
@@ -129,6 +131,15 @@ async def get_user_policies(
     
     if policy_type:
         query = query.filter(Policy.policy_type == policy_type)
+
+    if account:
+        account_user = db.query(User).filter(User.stellar_address == account).first()
+        # If the account doesn't exist or isn't the current user, return empty results
+        if account_user is None or account_user.id != current_user.id:
+            return PolicyListResponse(
+                policies=[], total=0, page=page, per_page=per_page,
+                has_next=False, total_pages=0
+            )
     
     total = query.count()
     total_pages = math.ceil(total / per_page) if per_page > 0 else 0
