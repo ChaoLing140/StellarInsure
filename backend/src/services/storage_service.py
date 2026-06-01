@@ -137,7 +137,23 @@ class StorageService:
                 )
 
             # Return full path for serving
-            return os.path.join(self.upload_dir, file_path)
+            abs_upload_dir = os.path.abspath(self.upload_dir)
+            if os.path.isabs(file_path) or ".." in file_path.split("/") or ".." in file_path.split("\\"):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Path traversal detected"
+                )
+            
+            full_path = os.path.join(self.upload_dir, file_path)
+            abs_full_path = os.path.abspath(full_path)
+            
+            if not abs_full_path.startswith(abs_upload_dir):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Path traversal detected"
+                )
+            
+            return full_path
         except Exception as e:
             if isinstance(e, HTTPException):
                 raise e
