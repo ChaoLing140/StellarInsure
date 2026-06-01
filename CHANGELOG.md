@@ -1,3 +1,10 @@
+## [1.31.2](https://github.com/ChaoLing140/StellarInsure/compare/v1.31.1...v1.31.2) (2026-06-01)
+
+
+### Bug Fixes
+
+* prevent path traversal, prevent double initialization, enforce consistent auth errors and add yield rounding tests ([3ff7ece](https://github.com/ChaoLing140/StellarInsure/commit/3ff7ecef88dfad23dcbcb6d0e58ff1f743f8986e))
+
 # 1.0.0 (2026-06-01)
 
 
