@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, BigInteger, Boolean, DateTime, Enum, Numeric, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, BigInteger, Boolean, DateTime, Enum, Numeric, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 import enum
@@ -39,6 +39,7 @@ class User(Base):
     claims = relationship("Claim", back_populates="claimant", cascade="all, delete-orphan")
     transactions = relationship("Transaction", back_populates="user", cascade="all, delete-orphan")
     webhooks = relationship("Webhook", back_populates="user", cascade="all, delete-orphan")
+    idempotency_records = relationship("IdempotencyRecord", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, stellar_address='{self.stellar_address}')>"
@@ -134,6 +135,28 @@ class Transaction(Base):
 
     def __repr__(self):
         return f"<Transaction(id={self.id}, type='{self.transaction_type}', status='{self.status}')>"
+
+
+class IdempotencyRecord(Base):
+    __tablename__ = "idempotency_records"
+    __table_args__ = (
+        UniqueConstraint("user_id", "scope", "idempotency_key", name="uq_idempotency_user_scope_key"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    scope = Column(String(64), nullable=False, index=True)
+    idempotency_key = Column(String(128), nullable=False)
+    request_fingerprint = Column(String(64), nullable=False)
+    transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+
+    user = relationship("User", back_populates="idempotency_records")
+    transaction = relationship("Transaction")
+
+    def __repr__(self):
+        return f"<IdempotencyRecord(user_id={self.user_id}, scope='{self.scope}')>"
 
 
 class WebhookEventType(enum.Enum):

@@ -276,6 +276,36 @@ class TransactionResponse(BaseModel):
         from_attributes = True
 
 
+class PremiumPaymentRequest(BaseModel):
+    policy_id: int = Field(..., gt=0, description="Policy receiving the premium payment", example=1)
+    transaction_hash: str = Field(
+        ...,
+        min_length=1,
+        max_length=64,
+        description="Submitted Stellar transaction hash",
+        example="abc123hash",
+    )
+    amount: float = Field(
+        ...,
+        gt=0,
+        le=1_000_000_000,
+        description="Premium amount in XLM",
+        example=50.25,
+    )
+    idempotency_key: str = Field(
+        ...,
+        min_length=8,
+        max_length=128,
+        description="Client-generated replay key scoped to the authenticated wallet and premium payment operation",
+        example="premium-1-20260531-0001",
+    )
+
+    @field_validator("amount")
+    @classmethod
+    def validate_amount(cls, v: float) -> float:
+        return round(v, 7)
+
+
 class MessageResponse(BaseModel):
     message: str = Field(..., description="Response message", example="Operation successful")
 

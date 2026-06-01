@@ -1,9 +1,15 @@
-import { describe, it, expect } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ClaimHistoryList, type ClaimHistoryItem } from "./claim-history-list";
+import { mockRouter, setMockSearchParams } from "@/test/mocks/next-navigation";
 
 describe("ClaimHistoryList", () => {
+  beforeEach(() => {
+    setMockSearchParams("");
+    vi.restoreAllMocks();
+  });
+
   const mockClaims: ClaimHistoryItem[] = [
     {
       id: "CLM-0091",
@@ -174,6 +180,56 @@ describe("ClaimHistoryList", () => {
     };
     render(<ClaimHistoryList claims={[processingClaim]} />);
     expect(screen.getByText("Processing")).toBeInTheDocument();
+  });
+
+  it("filters claims by status toggles and writes the URL state", async () => {
+    const user = userEvent.setup();
+    const replaceSpy = vi.spyOn(mockRouter, "replace");
+    const paidClaim: ClaimHistoryItem = {
+      ...mockClaims[0],
+      id: "CLM-0094",
+      status: "paid",
+    };
+
+    render(<ClaimHistoryList claims={[...mockClaims, paidClaim]} />);
+
+    await user.click(screen.getByRole("button", { name: "Pending" }));
+    expect(screen.getByText("CLM-0092")).toBeInTheDocument();
+    expect(screen.queryByText("CLM-0091")).not.toBeInTheDocument();
+    expect(replaceSpy).toHaveBeenLastCalledWith("/?claimStatus=pending");
+
+    await user.click(screen.getByRole("button", { name: "Paid" }));
+    expect(screen.getByText("CLM-0092")).toBeInTheDocument();
+    expect(screen.getByText("CLM-0094")).toBeInTheDocument();
+    expect(replaceSpy).toHaveBeenLastCalledWith(
+      "/?claimStatus=pending%2Cpaid",
+    );
+  });
+
+  it("initializes filters from URL search params", () => {
+    setMockSearchParams("claimStatus=rejected");
+    render(<ClaimHistoryList claims={mockClaims} />);
+
+    expect(screen.getByText("CLM-0093")).toBeInTheDocument();
+    expect(screen.queryByText("CLM-0091")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Rejected" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
+  it("explains active filters when no claims match", async () => {
+    const user = userEvent.setup();
+    render(<ClaimHistoryList claims={mockClaims} />);
+
+    await user.click(screen.getByRole("button", { name: "Paid" }));
+
+    expect(
+      screen.getByText("No claims match the active filters: Paid."),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /clear filters/i }),
+    ).toBeInTheDocument();
   });
 
   it("formats large amounts correctly", () => {

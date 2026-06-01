@@ -4,6 +4,7 @@ Handles contract invocation, transaction building, submission, and event monitor
 """
 import json
 import base64
+import hashlib
 import logging
 from typing import Optional, Dict, Any, List, Callable
 from datetime import datetime
@@ -20,7 +21,7 @@ from stellar_sdk.exceptions import (
 )
 
 from ..config import get_settings
-from ..models import Transaction
+from ..models import IdempotencyRecord, Transaction
 from sqlalchemy.orm import Session
 
 
@@ -410,7 +411,9 @@ class StellarService:
         transaction_type: str,
         policy_id: Optional[int] = None,
         claim_id: Optional[int] = None,
-        status: str = "pending"
+        status: str = "pending",
+        idempotency_key: Optional[str] = None,
+        idempotency_scope: Optional[str] = None
     ) -> Transaction:
         """
         Store a transaction record in the database.
@@ -424,10 +427,33 @@ class StellarService:
             policy_id: Optional policy ID
             claim_id: Optional claim ID
             status: Transaction status
+            idempotency_key: Optional client replay key
+            idempotency_scope: Logical operation scope for the key
 
         Returns:
-            Created Transaction record
+            Created Transaction record, or the original record for a replayed key
         """
+        if idempotency_key:
+            scope = idempotency_scope or transaction_type
+            fingerprint = self._transaction_request_fingerprint(
+                transaction_hash=transaction_hash,
+                amount=amount,
+                transaction_type=transaction_type,
+                policy_id=policy_id,
+                claim_id=claim_id,
+                status=status
+            )
+            existing_record = db.query(IdempotencyRecord).filter(
+                IdempotencyRecord.user_id == user_id,
+                IdempotencyRecord.scope == scope,
+                IdempotencyRecord.idempotency_key == idempotency_key
+            ).first()
+
+            if existing_record:
+                if existing_record.request_fingerprint != fingerprint:
+                    raise ValueError("Idempotency key was already used for a different request")
+                return existing_record.transaction
+
         transaction = Transaction(
             user_id=user_id,
             policy_id=policy_id,
@@ -442,7 +468,38 @@ class StellarService:
         db.commit()
         db.refresh(transaction)
 
+        if idempotency_key:
+            record = IdempotencyRecord(
+                user_id=user_id,
+                scope=scope,
+                idempotency_key=idempotency_key,
+                request_fingerprint=fingerprint,
+                transaction_id=transaction.id
+            )
+            db.add(record)
+            db.commit()
+
         return transaction
+
+    def _transaction_request_fingerprint(
+        self,
+        transaction_hash: str,
+        amount: float,
+        transaction_type: str,
+        policy_id: Optional[int],
+        claim_id: Optional[int],
+        status: str
+    ) -> str:
+        payload = {
+            "amount": round(float(amount), 7),
+            "claim_id": claim_id,
+            "policy_id": policy_id,
+            "status": status,
+            "transaction_hash": transaction_hash,
+            "transaction_type": transaction_type,
+        }
+        encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return hashlib.sha256(encoded).hexdigest()
 
     async def verify_stellar_signature(
         self,

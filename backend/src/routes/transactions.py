@@ -1,15 +1,15 @@
 from datetime import datetime
 from typing import Optional
 from enum import Enum
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
 from ..database import get_db
-from ..models import User, Transaction
-from ..schemas import TransactionResponse
+from ..models import Policy, User, Transaction
+from ..schemas import PremiumPaymentRequest, TransactionResponse
 from ..dependencies import get_current_active_user
-from ..rate_limiter import limiter
 from ..config import get_settings
+from ..errors import PolicyNotFoundError
+from ..services.stellar_service import StellarService, get_stellar_service
 
 settings = get_settings()
 
@@ -24,6 +24,77 @@ class TransactionStatus(str, Enum):
     pending = "pending"
     successful = "successful"
     failed = "failed"
+
+PREMIUM_PAYMENT_IDEMPOTENCY_SCOPE = "premium_payment"
+
+
+def format_transaction_response(transaction: Transaction) -> TransactionResponse:
+    return TransactionResponse(
+        id=transaction.id,
+        user_id=transaction.user_id,
+        policy_id=transaction.policy_id,
+        claim_id=transaction.claim_id,
+        transaction_hash=transaction.transaction_hash,
+        amount=float(transaction.amount),
+        transaction_type=transaction.transaction_type,
+        status=transaction.status,
+        created_at=transaction.created_at,
+        updated_at=transaction.updated_at
+    )
+
+
+@router.post(
+    "/premium-payments",
+    response_model=TransactionResponse,
+    summary="Record a premium payment",
+    description=(
+        "Records a submitted premium payment transaction. The idempotency key is scoped to "
+        "the authenticated wallet and premium payment operation, so replaying the same "
+        "request with the same key returns the original transaction record."
+    ),
+    responses={
+        200: {"description": "Premium payment record created or replayed"},
+        401: {"description": "Not authenticated"},
+        404: {"description": "Policy not found"},
+        409: {"description": "Idempotency key reused for a different request"},
+    }
+)
+async def record_premium_payment(
+    payment_data: PremiumPaymentRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+    stellar: StellarService = Depends(get_stellar_service)
+):
+    policy = db.query(Policy).filter(
+        Policy.id == payment_data.policy_id,
+        Policy.policyholder_id == current_user.id
+    ).first()
+
+    if policy is None:
+        raise PolicyNotFoundError()
+
+    if round(float(policy.premium), 7) != payment_data.amount:
+        raise HTTPException(
+            status_code=400,
+            detail="Premium payment amount must match the policy premium"
+        )
+
+    try:
+        transaction = await stellar.store_transaction_record(
+            db=db,
+            user_id=current_user.id,
+            transaction_hash=payment_data.transaction_hash,
+            amount=payment_data.amount,
+            transaction_type=TransactionType.premium.value,
+            policy_id=policy.id,
+            status=TransactionStatus.pending.value,
+            idempotency_key=payment_data.idempotency_key,
+            idempotency_scope=PREMIUM_PAYMENT_IDEMPOTENCY_SCOPE
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    return format_transaction_response(transaction)
 
 @router.get(
     "",
@@ -89,21 +160,7 @@ async def get_transactions(
     transactions = query.order_by(Transaction.created_at.desc()).offset(offset).limit(per_page).all()
     
     # Convert to response format
-    transaction_responses = [
-        TransactionResponse(
-            id=t.id,
-            user_id=t.user_id,
-            policy_id=t.policy_id,
-            claim_id=t.claim_id,
-            transaction_hash=t.transaction_hash,
-            amount=float(t.amount),
-            transaction_type=t.transaction_type,
-            status=t.status,
-            created_at=t.created_at,
-            updated_at=t.updated_at
-        )
-        for t in transactions
-    ]
+    transaction_responses = [format_transaction_response(t) for t in transactions]
     
     has_next = (offset + per_page) < total
     total_pages = (total + per_page - 1) // per_page if total > 0 else 0

@@ -2,10 +2,16 @@
 
 import React, { useState, useMemo } from "react";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Icon } from "@/components/icon";
 import { Skeleton } from "@/components/skeleton";
 
-export type ClaimStatus = "pending" | "approved" | "rejected" | "processing";
+export type ClaimStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "paid"
+  | "processing";
 
 export interface ClaimHistoryItem {
   id: string;
@@ -29,11 +35,44 @@ const STATUS_CONFIG: Record<ClaimStatus, { label: string; className: string }> =
     pending: { label: "Pending", className: "status-pill--pending" },
     approved: { label: "Approved", className: "status-pill--approved" },
     rejected: { label: "Rejected", className: "status-pill--cancelled" },
+    paid: { label: "Paid", className: "status-pill--claimed" },
     processing: {
       label: "Processing",
       className: "status-pill--claim-pending",
     },
   };
+
+const FILTERABLE_STATUSES = [
+  "pending",
+  "approved",
+  "rejected",
+  "paid",
+] as const;
+
+type ClaimStatusFilter = (typeof FILTERABLE_STATUSES)[number];
+const CLAIM_STATUS_QUERY_PARAM = "claimStatus";
+
+function parseStatusFilters(
+  searchParams: Pick<URLSearchParams, "get">,
+): ClaimStatusFilter[] {
+  const rawValue = searchParams.get(CLAIM_STATUS_QUERY_PARAM);
+  if (!rawValue) {
+    return [];
+  }
+
+  const validStatuses = new Set<string>(FILTERABLE_STATUSES);
+  return rawValue
+    .split(",")
+    .filter((status): status is ClaimStatusFilter =>
+      validStatuses.has(status),
+    );
+}
+
+function formatActiveFilters(filters: ClaimStatusFilter[]): string {
+  return filters
+    .map((status) => STATUS_CONFIG[status].label)
+    .join(", ");
+}
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -57,11 +96,27 @@ export function ClaimHistoryList({
   isLoading = false,
   emptyMessage = "No claims submitted yet",
 }: ClaimHistoryListProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [sortBy, setSortBy] = useState<"date" | "amount" | "status">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [activeFilters, setActiveFilters] = useState<ClaimStatusFilter[]>(() =>
+    parseStatusFilters(searchParams),
+  );
+
+  const filteredClaims = useMemo(() => {
+    if (activeFilters.length === 0) {
+      return claims;
+    }
+
+    return claims.filter((claim) =>
+      activeFilters.includes(claim.status as ClaimStatusFilter),
+    );
+  }, [activeFilters, claims]);
 
   const sortedClaims = useMemo(() => {
-    const sorted = [...claims];
+    const sorted = [...filteredClaims];
     sorted.sort((a, b) => {
       let comparison = 0;
 
@@ -77,7 +132,30 @@ export function ClaimHistoryList({
       return sortOrder === "asc" ? comparison : -comparison;
     });
     return sorted;
-  }, [claims, sortBy, sortOrder]);
+  }, [filteredClaims, sortBy, sortOrder]);
+
+  const updateFilters = (nextFilters: ClaimStatusFilter[]) => {
+    setActiveFilters(nextFilters);
+
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextFilters.length > 0) {
+      params.set(CLAIM_STATUS_QUERY_PARAM, nextFilters.join(","));
+    } else {
+      params.delete(CLAIM_STATUS_QUERY_PARAM);
+    }
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
+  const toggleFilter = (status: ClaimStatusFilter) => {
+    const nextFilters = activeFilters.includes(status)
+      ? activeFilters.filter((filter) => filter !== status)
+      : [...activeFilters, status];
+    updateFilters(nextFilters);
+  };
+
+  const clearFilters = () => updateFilters([]);
 
   const toggleSort = (field: "date" | "amount" | "status") => {
     if (sortBy === field) {
@@ -145,17 +223,98 @@ export function ClaimHistoryList({
     );
   }
 
-  if (claims.length === 0) {
+  const controls = (
+    <div className="claim-history-list__controls">
+      <div
+        className="claim-history-list__filters"
+        role="group"
+        aria-label="Filter claims by status"
+      >
+        {FILTERABLE_STATUSES.map((status) => (
+          <button
+            key={status}
+            type="button"
+            className="claim-filter-button"
+            aria-pressed={activeFilters.includes(status)}
+            onClick={() => toggleFilter(status)}
+          >
+            {STATUS_CONFIG[status].label}
+          </button>
+        ))}
+      </div>
+      <div className="claim-history-list__sorts" aria-label="Sort claims">
+        <button
+          className="sort-button"
+          onClick={() => toggleSort("date")}
+          aria-label={`Sort by date ${sortBy === "date" ? (sortOrder === "asc" ? "ascending" : "descending") : ""}`}
+        >
+          Date
+          {sortBy === "date" && (
+            <Icon
+              name={sortOrder === "asc" ? "chevron-up" : "chevron-down"}
+              size="sm"
+              tone="muted"
+            />
+          )}
+        </button>
+        <button
+          className="sort-button"
+          onClick={() => toggleSort("amount")}
+          aria-label={`Sort by amount ${sortBy === "amount" ? (sortOrder === "asc" ? "ascending" : "descending") : ""}`}
+        >
+          Amount
+          {sortBy === "amount" && (
+            <Icon
+              name={sortOrder === "asc" ? "chevron-up" : "chevron-down"}
+              size="sm"
+              tone="muted"
+            />
+          )}
+        </button>
+        <button
+          className="sort-button"
+          onClick={() => toggleSort("status")}
+          aria-label={`Sort by status ${sortBy === "status" ? (sortOrder === "asc" ? "ascending" : "descending") : ""}`}
+        >
+          Status
+          {sortBy === "status" && (
+            <Icon
+              name={sortOrder === "asc" ? "chevron-up" : "chevron-down"}
+              size="sm"
+              tone="muted"
+            />
+          )}
+        </button>
+      </div>
+    </div>
+  );
+
+  if (claims.length === 0 || sortedClaims.length === 0) {
+    const message =
+      activeFilters.length > 0
+        ? `No claims match the active filters: ${formatActiveFilters(activeFilters)}.`
+        : emptyMessage;
+
     return (
       <div className="claim-history-list">
         <div className="claim-history-list__header">
           <h3>Claim History</h3>
+          {controls}
         </div>
         <div className="state-card state-card--soft" role="status">
           <span className="state-icon" aria-hidden="true">
             <Icon name="clock" size="lg" tone="muted" />
           </span>
-          <p className="state-copy">{emptyMessage}</p>
+          <p className="state-copy">{message}</p>
+          {activeFilters.length > 0 && (
+            <button
+              type="button"
+              className="tx-clear-filters-btn"
+              onClick={clearFilters}
+            >
+              Clear filters
+            </button>
+          )}
         </div>
       </div>
     );
@@ -165,50 +324,7 @@ export function ClaimHistoryList({
     <div className="claim-history-list">
       <div className="claim-history-list__header">
         <h3>Claim History</h3>
-        <div className="claim-history-list__controls">
-          <button
-            className="sort-button"
-            onClick={() => toggleSort("date")}
-            aria-label={`Sort by date ${sortBy === "date" ? (sortOrder === "asc" ? "ascending" : "descending") : ""}`}
-          >
-            Date
-            {sortBy === "date" && (
-              <Icon
-                name={sortOrder === "asc" ? "chevron-up" : "chevron-down"}
-                size="sm"
-                tone="muted"
-              />
-            )}
-          </button>
-          <button
-            className="sort-button"
-            onClick={() => toggleSort("amount")}
-            aria-label={`Sort by amount ${sortBy === "amount" ? (sortOrder === "asc" ? "ascending" : "descending") : ""}`}
-          >
-            Amount
-            {sortBy === "amount" && (
-              <Icon
-                name={sortOrder === "asc" ? "chevron-up" : "chevron-down"}
-                size="sm"
-                tone="muted"
-              />
-            )}
-          </button>
-          <button
-            className="sort-button"
-            onClick={() => toggleSort("status")}
-            aria-label={`Sort by status ${sortBy === "status" ? (sortOrder === "asc" ? "ascending" : "descending") : ""}`}
-          >
-            Status
-            {sortBy === "status" && (
-              <Icon
-                name={sortOrder === "asc" ? "chevron-up" : "chevron-down"}
-                size="sm"
-                tone="muted"
-              />
-            )}
-          </button>
-        </div>
+        {controls}
       </div>
 
       <div className="claim-list" role="list" aria-label="Claim history">
