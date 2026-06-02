@@ -2,6 +2,8 @@ import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { LanguageProvider } from "@/i18n/provider";
+
 import CreatePolicyPageClient from "./create-page-client";
 
 vi.mock("@/components/wallet-provider", () => ({
@@ -61,8 +63,16 @@ vi.mock("@/components/oracle-source-selector", () => ({
       </label>
     ) : (
       <p>Loading oracle providers...</p>
-    ),
+  ),
 }));
+
+function renderCreatePolicyPageClient() {
+  return render(
+    <LanguageProvider>
+      <CreatePolicyPageClient />
+    </LanguageProvider>,
+  );
+}
 
 describe("CreatePolicyPageClient", () => {
   beforeEach(() => {
@@ -77,14 +87,14 @@ describe("CreatePolicyPageClient", () => {
   });
 
   it("moves from policy type selection into configure step", () => {
-    render(<CreatePolicyPageClient />);
+    renderCreatePolicyPageClient();
     fireEvent.click(screen.getByRole("radio", { name: /weather protection/i }));
 
     expect(screen.getByRole("heading", { name: /configure your policy/i })).toBeInTheDocument();
   });
 
   it("applies form validation for invalid coverage values", () => {
-    render(<CreatePolicyPageClient />);
+    renderCreatePolicyPageClient();
     fireEvent.click(screen.getByRole("radio", { name: /weather protection/i }));
 
     const coverageInput = screen.getByLabelText(/coverage amount/i);
@@ -110,7 +120,7 @@ describe("CreatePolicyPageClient", () => {
         updatedAt: Date.now(),
       }),
     );
-    render(<CreatePolicyPageClient />);
+    renderCreatePolicyPageClient();
 
     expect(screen.getByRole("heading", { name: /review your policy/i })).toBeInTheDocument();
 
@@ -144,7 +154,7 @@ describe("CreatePolicyPageClient", () => {
         updatedAt: Date.now(),
       }),
     );
-    render(<CreatePolicyPageClient />);
+    renderCreatePolicyPageClient();
 
     expect(screen.getByRole("heading", { name: /review your policy/i })).toBeInTheDocument();
 
@@ -154,5 +164,41 @@ describe("CreatePolicyPageClient", () => {
 
     const triggerInput = screen.getByPlaceholderText("Trigger mock input") as HTMLInputElement;
     expect(triggerInput.value).toBe("temperature > 25 AND rainfall > 50");
+  });
+
+  it("lets users undo an explicit draft discard", () => {
+    const savedDraft = {
+      policyType: "weather",
+      coverageAmount: "5000",
+      premium: "120",
+      triggerCondition: "rainfall > 50",
+      duration: "90",
+      oracleProvider: "weatherlink-prime",
+    };
+    localStorage.setItem(
+      "stellarinsure-policy-draft",
+      JSON.stringify({ data: savedDraft, updatedAt: 1000 }),
+    );
+
+    renderCreatePolicyPageClient();
+
+    expect(screen.getByRole("heading", { name: /review your policy/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /discard/i }));
+
+    expect(screen.getByText(/draft discarded/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /choose a policy type/i })).toBeInTheDocument();
+    expect(localStorage.getItem("stellarinsure-policy-draft")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: /undo discard/i }));
+
+    expect(screen.getByRole("heading", { name: /review your policy/i })).toBeInTheDocument();
+    expect(screen.getByText(/rainfall > 50/i)).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(600);
+    });
+
+    expect(JSON.parse(localStorage.getItem("stellarinsure-policy-draft") ?? "{}").data).toEqual(savedDraft);
   });
 });

@@ -56,7 +56,11 @@ const INITIAL_DRAFT: PolicyDraft = {
   oracleProvider: "",
 };
 
-
+function getDraftStep(draft: PolicyDraft): CreateStep {
+  if (draft.policyType && draft.coverageAmount && draft.triggerCondition) return 2;
+  if (draft.policyType) return 1;
+  return 0;
+}
 
 function parseConditionString(condition: string): ConditionRule[] | undefined {
   if (!condition || condition.trim() === "") return undefined;
@@ -340,11 +344,7 @@ export default function CreatePolicyPageClient() {
     hasClearedBackup,
     isSaved,
   } = usePolicyDraftAutosave<PolicyDraft>("stellarinsure-policy-draft", INITIAL_DRAFT);
-  const [step, setStep] = useState<CreateStep>(() => {
-    if (draft.policyType && draft.coverageAmount && draft.triggerCondition) return 2;
-    if (draft.policyType) return 1;
-    return 0;
-  });
+  const [step, setStep] = useState<CreateStep>(() => getDraftStep(draft));
   const [txSteps, setTxSteps] = useState<TimelineStep[]>(DEFAULT_TX_STEPS);
   const [coverageTouched, setCoverageTouched] = useState(false);
   const [premiumTouched, setPremiumTouched] = useState(false);
@@ -367,6 +367,13 @@ export default function CreatePolicyPageClient() {
     setDraft({ ...draft, policyType: type, oracleProvider: "" });
     setStep(1);
     setReceipt(null);
+  }
+
+  function handleDiscardDraft() {
+    clearDraft();
+    setStep(0);
+    setReceipt(null);
+    setValidationErrors([]);
   }
 
   useEffect(() => {
@@ -576,13 +583,7 @@ export default function CreatePolicyPageClient() {
               if (!restored) {
                 return;
               }
-              if (restored.policyType && restored.coverageAmount && restored.triggerCondition) {
-                setStep(2);
-              } else if (restored.policyType) {
-                setStep(1);
-              } else {
-                setStep(0);
-              }
+              setStep(getDraftStep(restored));
             }}
           >
             Undo discard
@@ -800,10 +801,7 @@ export default function CreatePolicyPageClient() {
             <button
               className="cta-secondary"
               type="button"
-              onClick={() => {
-                clearDraft();
-                setStep(0);
-              }}
+              onClick={handleDiscardDraft}
             >
               {t("createPolicy.actions.discard")}
             </button>
