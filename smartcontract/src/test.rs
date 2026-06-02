@@ -191,6 +191,23 @@ fn test_process_claim_approve_updates_claim_and_policy() {
 }
 
 #[test]
+fn test_process_claim_approve_updates_total_payouts() {
+    let (env, contract_id, _admin, policyholder, _token) = setup_insurance_contract();
+    let client = StellarInsureClient::new(&env, &contract_id);
+
+    let stats_before = client.get_treasury_stats().unwrap();
+    let initial_payouts = stats_before.total_payouts_distributed;
+
+    let policy_id = create_policy(&env, &client, &policyholder);
+    let claim_amount = 500_000i128;
+    client.submit_claim(&policy_id, &claim_amount, &String::from_str(&env, "proof"));
+    client.process_claim(&policy_id, &true);
+
+    let stats_after = client.get_treasury_stats().unwrap();
+    assert_eq!(stats_after.total_payouts_distributed, initial_payouts + claim_amount);
+}
+
+#[test]
 fn test_process_claim_reject_sets_rejected_status() {
     let (env, contract_id, _admin, policyholder, _token) = setup_insurance_contract();
     let client = StellarInsureClient::new(&env, &contract_id);
@@ -1224,11 +1241,95 @@ fn test_verify_oracle_stubs() {
     );
     assert!(res_flight.is_verified);
 
-    let res_contract = client.verify_oracle_condition(
-        &soroban_sdk::symbol_short!("Contract"),
+    let res_price = client.verify_oracle_condition(
+        &soroban_sdk::symbol_short!("Price"),
         &soroban_sdk::symbol_short!("MockParam"),
     );
-    assert!(res_contract.is_verified);
+    assert!(res_price.is_verified);
+
+    let res_smart_contract = client.verify_oracle_condition(
+        &soroban_sdk::symbol_short!("SmartContract"),
+        &soroban_sdk::symbol_short!("MockParam"),
+    );
+    assert!(res_smart_contract.is_verified);
+}
+
+#[test]
+#[should_panic(expected = "OracleVerificationFailed")]
+fn test_verify_oracle_rejects_unknown_type() {
+    let (env, contract_id, _admin, _policyholder, _token) = setup_insurance_contract();
+    let client = StellarInsureClient::new(&env, &contract_id);
+
+    client.verify_oracle_condition(
+        &soroban_sdk::symbol_short!("UnknownOracle"),
+        &soroban_sdk::symbol_short!("MockParam"),
+    );
+}
+
+// ── Issue #384 — Oracle trigger evaluation authorization ─────────────────────
+
+#[test]
+#[should_panic(expected = "Unauthorized")]
+fn test_evaluate_oracle_trigger_rejects_unauthorized_caller() {
+    let (env, contract_id, admin, policyholder, token) = setup_insurance_contract();
+    let client = StellarInsureClient::new(&env, &contract_id);
+
+    let policy_id = create_policy(&env, &client, &policyholder);
+
+    client.submit_claim(&policyholder, &policy_id, &500_000);
+
+    let unauthorized_caller = Address::generate(&env);
+    client.evaluate_oracle_trigger(
+        &unauthorized_caller,
+        &policy_id,
+        &soroban_sdk::symbol_short!("Weather"),
+        &soroban_sdk::symbol_short!("MockParam"),
+    );
+}
+
+#[test]
+fn test_evaluate_oracle_trigger_authorized_admin() {
+    let (env, contract_id, admin, policyholder, token) = setup_insurance_contract();
+    let client = StellarInsureClient::new(&env, &contract_id);
+
+    let policy_id = create_policy(&env, &client, &policyholder);
+    client.submit_claim(&policyholder, &policy_id, &500_000);
+
+    client.register_oracle(
+        &admin,
+        &soroban_sdk::symbol_short!("Weather"),
+        &admin,
+    );
+
+    client.evaluate_oracle_trigger(
+        &admin,
+        &policy_id,
+        &soroban_sdk::symbol_short!("Weather"),
+        &soroban_sdk::symbol_short!("MockParam"),
+    );
+}
+
+#[test]
+fn test_evaluate_oracle_trigger_authorized_oracle_address() {
+    let (env, contract_id, admin, policyholder, token) = setup_insurance_contract();
+    let client = StellarInsureClient::new(&env, &contract_id);
+
+    let oracle_address = Address::generate(&env);
+    let policy_id = create_policy(&env, &client, &policyholder);
+    client.submit_claim(&policyholder, &policy_id, &500_000);
+
+    client.register_oracle(
+        &admin,
+        &soroban_sdk::symbol_short!("Weather"),
+        &oracle_address,
+    );
+
+    client.evaluate_oracle_trigger(
+        &oracle_address,
+        &policy_id,
+        &soroban_sdk::symbol_short!("Weather"),
+        &soroban_sdk::symbol_short!("MockParam"),
+    );
 }
 
 // ── Tests for Issue #203: Premium verification ───────────────────────────────
@@ -1476,6 +1577,37 @@ fn test_full_withdrawal_with_multiple_providers_only_removes_correct_one() {
     // Provider one should be gone
     let result = client.try_get_provider_position(&provider_one);
     assert!(result.is_err());
+}
+
+// ── Issue #386 — Reserve ratio boundary values ─────────────────────────────
+
+#[test]
+fn test_reserve_ratio_boundary_zero_accepted() {
+    let (env, contract_id, admin, _provider_one, _provider_two) = setup_risk_pool();
+    let client = RiskPoolClient::new(&env, &contract_id);
+
+    client.set_reserve_ratio(&admin, &0);
+    let ratio = client.get_reserve_ratio();
+    assert_eq!(ratio, 0);
+}
+
+#[test]
+fn test_reserve_ratio_boundary_max_10000_accepted() {
+    let (env, contract_id, admin, _provider_one, _provider_two) = setup_risk_pool();
+    let client = RiskPoolClient::new(&env, &contract_id);
+
+    client.set_reserve_ratio(&admin, &10000);
+    let ratio = client.get_reserve_ratio();
+    assert_eq!(ratio, 10000);
+}
+
+#[test]
+#[should_panic(expected = "InvalidAmount")]
+fn test_reserve_ratio_boundary_above_10000_rejected() {
+    let (env, contract_id, admin, _provider_one, _provider_two) = setup_risk_pool();
+    let client = RiskPoolClient::new(&env, &contract_id);
+
+    client.set_reserve_ratio(&admin, &10001);
 }
 
 #[test]

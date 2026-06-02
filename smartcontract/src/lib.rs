@@ -361,7 +361,9 @@ impl StellarInsure {
             }
 
             let total_payouts = storage::get_total_payouts(&env);
-            storage::set_total_payouts(&env, total_payouts + claim.claim_amount);
+            let new_total = total_payouts.checked_add(claim.claim_amount)
+                .ok_or(Error::ClaimAmountOverflow)?;
+            storage::set_total_payouts(&env, new_total);
 
             events::publish_payout(
                 &env,
@@ -589,6 +591,7 @@ impl StellarInsure {
     /// Requires at least `oracle_quorum_threshold` registered oracles to confirm the condition.
     pub fn evaluate_oracle_trigger(
         env: Env,
+        caller: Address,
         policy_id: u64,
         oracle_type: Symbol,
         parameter: Symbol,
@@ -597,15 +600,21 @@ impl StellarInsure {
             return Err(Error::ContractPaused);
         }
 
+        caller.require_auth();
+
         let mut policy = storage::get_policy(&env, policy_id)?;
 
         if policy.status != PolicyStatus::ClaimPending {
             return Err(Error::NoPendingClaim);
         }
 
-        // Verify oracle is registered
-        if storage::get_oracle_address(&env, &oracle_type).is_none() {
-            return Err(Error::OracleNotRegistered);
+        // Verify oracle is registered and caller is authorized
+        let oracle_address = storage::get_oracle_address(&env, &oracle_type)
+            .ok_or(Error::OracleNotRegistered)?;
+        let admin = storage::get_admin(&env);
+
+        if caller != oracle_address && caller != admin {
+            return Err(Error::Unauthorized);
         }
 
         // Enforce quorum: count how many registered oracle types confirm the condition
@@ -662,7 +671,9 @@ impl StellarInsure {
             }
 
             let total_payouts = storage::get_total_payouts(&env);
-            storage::set_total_payouts(&env, total_payouts + claim.claim_amount);
+            let new_total = total_payouts.checked_add(claim.claim_amount)
+                .ok_or(Error::ClaimAmountOverflow)?;
+            storage::set_total_payouts(&env, new_total);
 
             storage::set_policy(&env, policy_id, &policy);
             storage::set_claim(&env, policy_id, &claim);
@@ -1120,7 +1131,9 @@ impl StellarInsure {
             token_client.transfer(&contract_address, &policy.policyholder, &claim.claim_amount);
 
             let total_payouts = storage::get_total_payouts(&env);
-            storage::set_total_payouts(&env, total_payouts + claim.claim_amount);
+            let new_total = total_payouts.checked_add(claim.claim_amount)
+                .ok_or(Error::ClaimAmountOverflow)?;
+            storage::set_total_payouts(&env, new_total);
 
             events::publish_payout(
                 &env,
