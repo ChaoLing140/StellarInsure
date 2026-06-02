@@ -163,11 +163,11 @@ export function PolicyTable({ policies, isLoading }: PolicyTableProps) {
                 <tbody>
                     {sortedPolicies.map((policy) => (
                         <tr key={policy.id} className="tx-row">
-                            <td className="tx-amount">{policy.id}</td>
-                            <td className="tx-amount">${policy.premiumAmount.toFixed(2)}</td>
-                            <td className="tx-amount">${policy.coverageAmount.toFixed(2)}</td>
-                            <td>{new Date(policy.expiresAt).toLocaleDateString()}</td>
-                            <td>
+                            <td className="tx-amount" data-label="Policy ID">{policy.id}</td>
+                            <td className="tx-amount" data-label="Premium">${policy.premiumAmount.toFixed(2)}</td>
+                            <td className="tx-amount" data-label="Coverage">${policy.coverageAmount.toFixed(2)}</td>
+                            <td data-label="Expiry">{new Date(policy.expiresAt).toLocaleDateString()}</td>
+                            <td data-label="Status">
                                 <StatusPill status={policy.status} />
                             </td>
                         </tr>

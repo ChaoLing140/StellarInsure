@@ -34,6 +34,11 @@ We welcome feature suggestions! Please:
 7. Push to your fork
 8. Open a Pull Request
 
+#### CI Security & Dependency Gates
+Pull requests are automatically scanned for security vulnerabilities and lockfile drift:
+- **Lockfile Drift Check**: Ensure `package-lock.json` and `Cargo.lock` match their respective `package.json` and `Cargo.toml` configurations. If the drift check fails, regenerate lockfiles locally (e.g., run `npm install` in `frontend/` or `cargo check` in `smartcontract/`) and commit them.
+- **Trivy Vulnerability Scan**: CI flags dependency versions containing HIGH or CRITICAL severity advisories. If flagged, update the vulnerable package to a secure version.
+
 ### Development Setup
 
 ```bash

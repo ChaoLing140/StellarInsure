@@ -129,6 +129,28 @@ class TestStorageService:
         assert exc.value.status_code == 403
         assert "Invalid signature" in exc.value.detail
 
+    def test_path_traversal_token_rejected(self, storage_service):
+        # Generate token with traversal path and valid signature
+        file_path = "test/../../etc/passwd"
+        url = storage_service.generate_secure_url(file_path, expires_in=60)
+        token = url.split("/")[-1]
+        
+        with pytest.raises(HTTPException) as exc:
+            storage_service.validate_token(token)
+        assert exc.value.status_code == 403
+        assert "Path traversal" in exc.value.detail
+
+    def test_absolute_path_token_rejected(self, storage_service):
+        # Generate token with absolute path and valid signature
+        file_path = "/etc/passwd"
+        url = storage_service.generate_secure_url(file_path, expires_in=60)
+        token = url.split("/")[-1]
+        
+        with pytest.raises(HTTPException) as exc:
+            storage_service.validate_token(token)
+        assert exc.value.status_code == 403
+        assert "Path traversal" in exc.value.detail
+
 class TestStorageIntegration:
     def test_storage_route_access(self):
         from src.main import app

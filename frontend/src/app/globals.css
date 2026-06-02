@@ -2577,6 +2577,10 @@ dt,
     );
   }
 
+  .tx-table {
+    min-width: 100%;
+  }
+
   .tx-table,
   .tx-table thead,
   .tx-table tbody,
