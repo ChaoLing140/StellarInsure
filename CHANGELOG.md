@@ -1,3 +1,16 @@
+# [1.32.0](https://github.com/ChaoLing140/StellarInsure/compare/v1.31.2...v1.32.0) (2026-06-02)
+
+
+### Bug Fixes
+
+* **contracts:** reject unknown oracle types explicitly ([0f0b8fc](https://github.com/ChaoLing140/StellarInsure/commit/0f0b8fc4df3ed184a3907c93cbd55206913b351f)), closes [#385](https://github.com/ChaoLing140/StellarInsure/issues/385)
+* **contracts:** use checked addition for total payout accounting ([2fac479](https://github.com/ChaoLing140/StellarInsure/commit/2fac4791ead69f9afaf4f48985d6964f6bbcd4c1)), closes [#383](https://github.com/ChaoLing140/StellarInsure/issues/383)
+
+
+### Features
+
+* **contracts:** add admin auth to oracle trigger evaluation ([d835a15](https://github.com/ChaoLing140/StellarInsure/commit/d835a15e3ef6f76af073204e80bd3e2a87d6cef4)), closes [#384](https://github.com/ChaoLing140/StellarInsure/issues/384)
+
 ## [1.31.2](https://github.com/ChaoLing140/StellarInsure/compare/v1.31.1...v1.31.2) (2026-06-01)
 
 
